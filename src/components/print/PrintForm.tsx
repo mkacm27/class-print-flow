@@ -126,10 +126,17 @@ const PrintForm = () => {
   }, []);
 
   const onSubmit = (data: PrintFormValues) => {
-    // Create the print job
+    // Create the print job with non-optional className and printType
     const printJob: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'> = {
-      ...data,
+      className: data.className,  // Explicitly mark as required
+      printType: data.printType,  // Explicitly mark as required
+      pages: data.pages,          // Explicitly mark as required
       totalPrice: calculatedPrice,
+      teacherName: data.teacherName,
+      documentType: data.documentType,
+      copies: data.copies,
+      paid: data.paid,
+      notes: data.notes,
     };
 
     try {
@@ -207,6 +214,7 @@ const PrintForm = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
                         {teachers.map((t) => (
                           <SelectItem key={t.id} value={t.name}>
                             {t.name}
@@ -234,6 +242,7 @@ const PrintForm = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
                         {documentTypes.map((dt) => (
                           <SelectItem key={dt.id} value={dt.name}>
                             {dt.name}

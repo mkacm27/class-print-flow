@@ -191,7 +191,7 @@ const History = () => {
                   <SelectValue placeholder="Class" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Classes</SelectItem>
+                  <SelectItem value="all">All Classes</SelectItem>
                   {uniqueClasses.map((className) => (
                     <SelectItem key={className} value={className}>
                       {className}
@@ -208,7 +208,7 @@ const History = () => {
                   <SelectValue placeholder="Payment Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="unpaid">Unpaid</SelectItem>
                 </SelectContent>
@@ -223,7 +223,7 @@ const History = () => {
                     <SelectValue placeholder="Document Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Document Types</SelectItem>
+                    <SelectItem value="all">All Document Types</SelectItem>
                     {uniqueDocumentTypes.map((docType) => (
                       <SelectItem key={docType} value={docType}>
                         {docType}
