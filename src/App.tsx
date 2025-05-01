@@ -12,6 +12,7 @@ import Receipt from "./pages/Receipt";
 import Statistics from "./pages/Statistics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import UnpaidReports from "./pages/UnpaidReports";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/receipt/:id" element={<MainLayout><Receipt /></MainLayout>} />
           <Route path="/statistics" element={<MainLayout><Statistics /></MainLayout>} />
           <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+          <Route path="/unpaid-reports" element={<MainLayout><UnpaidReports /></MainLayout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

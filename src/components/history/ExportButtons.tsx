@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { FileText, Files, Plus } from "lucide-react";
+import { FileText, Files, Plus, FileSpreadsheet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PrintJob } from "@/lib/db";
 
@@ -22,7 +22,7 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
         className="gap-2"
         onClick={onExportCSV}
       >
-        <Files className="w-4 h-4" />
+        <FileSpreadsheet className="w-4 h-4" />
         Export CSV
       </Button>
       <Button
@@ -32,6 +32,14 @@ export const ExportButtons: React.FC<ExportButtonsProps> = ({
       >
         <FileText className="w-4 h-4" />
         Export PDF
+      </Button>
+      <Button
+        variant="outline"
+        className="gap-2"
+        onClick={() => navigate("/unpaid-reports")}
+      >
+        <FileText className="w-4 h-4" />
+        Unpaid Reports
       </Button>
       <Button 
         className="gap-2"
