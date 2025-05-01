@@ -604,7 +604,7 @@ const Settings = () => {
                             />
                           </FormControl>
                           <FormDescription>
-                            Use {{serialNumber}} and {{totalPrice}} as placeholders
+                            Use {'{{serialNumber}}'} and {'{{totalPrice}}'} as placeholders
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
