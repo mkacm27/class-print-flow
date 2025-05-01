@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPrintJobs, PrintJob } from "@/lib/db";
-import { Calendar, Download, FileText, FileCsv, Filter, Plus } from "lucide-react";
+import { Calendar, Download, FileText, Files, Filter, Plus } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -26,7 +26,7 @@ const History = () => {
   const [filterClass, setFilterClass] = useState<string | null>(null);
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<string | null>(null);
   const [filterDocumentType, setFilterDocumentType] = useState<string | null>(null);
-  [uniqueClasses, setUniqueClasses] = useState<string[]>([]);
+  const [uniqueClasses, setUniqueClasses] = useState<string[]>([]);
   const [uniqueDocumentTypes, setUniqueDocumentTypes] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date | undefined>(subMonths(new Date(), 1));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
@@ -240,11 +240,12 @@ const History = () => {
     const csvContent = [
       headers.join(","),
       ...rows.map(row => row.map(cell => {
-        // Escape commas and quotes
-        if (cell.includes(",") || cell.includes('"') || cell.includes("\n")) {
-          return `"${cell.replace(/"/g, '""')}"`;
+        // Escape commas and quotes in string cells
+        const cellStr = String(cell);
+        if (cellStr.includes(",") || cellStr.includes('"') || cellStr.includes("\n")) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
         }
-        return cell;
+        return cellStr;
       }).join(","))
     ].join("\n");
     
@@ -389,7 +390,7 @@ const History = () => {
             className="gap-2"
             onClick={handleExportCSV}
           >
-            <FileCsv className="w-4 h-4" />
+            <Files className="w-4 h-4" />
             Export CSV
           </Button>
           <Button
