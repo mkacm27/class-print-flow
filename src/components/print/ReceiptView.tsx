@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -17,7 +16,7 @@ import {
   updatePrintJob 
 } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
-import { Share, Download, Printer as PrinterIcon, ArrowLeft, Check, FilePdf } from "lucide-react";
+import { Share, Download, Printer as PrinterIcon, ArrowLeft, Check, File } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { jsPDF } from "jspdf";
@@ -365,7 +364,7 @@ const ReceiptView = () => {
               Print
             </Button>
             <Button onClick={handleDownload} variant="outline" className="flex-1 gap-2">
-              <FilePdf className="w-4 h-4" />
+              <File className="w-4 h-4" />
               Download PDF
             </Button>
             <Button onClick={handleShare} className="flex-1 gap-2">
