@@ -66,7 +66,8 @@ import {
   updateDocumentType, 
   deleteDocumentType,
   exportData,
-  importData
+  importData,
+  Settings as SettingsType
 } from "@/lib/db";
 
 const settingsSchema = z.object({
@@ -120,7 +121,18 @@ const Settings = () => {
   };
 
   const onSaveSettings = (data: SettingsFormValues) => {
-    updateSettings(data);
+    // Make sure all required fields are present and have values
+    const updatedSettings: SettingsType = {
+      shopName: data.shopName,
+      contactInfo: data.contactInfo || "",
+      priceRecto: data.priceRecto,
+      priceRectoVerso: data.priceRectoVerso,
+      priceBoth: data.priceBoth,
+      maxUnpaidThreshold: data.maxUnpaidThreshold,
+      whatsappTemplate: data.whatsappTemplate || "Hello! Here is your receipt from PrintEase: {{serialNumber}}. Total: {{totalPrice}}. Thank you!",
+    };
+
+    updateSettings(updatedSettings);
     toast({
       title: "Settings saved",
       description: "Your settings have been updated successfully.",
@@ -303,23 +315,40 @@ const Settings = () => {
     event.target.value = '';
   };
 
+  // Define column types correctly
+  type ClassColumn = {
+    header: string;
+    accessorKey: keyof { id: string; name: string; totalUnpaid: number };
+    cell?: (row: any) => React.ReactNode;
+    searchable?: boolean;
+    sortable?: boolean;
+  }
+
+  type TeacherOrDocumentColumn = {
+    header: string;
+    accessorKey: keyof { id: string; name: string };
+    cell?: (row: any) => React.ReactNode;
+    searchable?: boolean;
+    sortable?: boolean;
+  }
+
   // Column definitions for the data tables
-  const classColumns = [
+  const classColumns: ClassColumn[] = [
     {
       header: "Class Name",
-      accessorKey: "name" as const,
+      accessorKey: "name",
       searchable: true,
       sortable: true,
     },
     {
       header: "Unpaid Balance",
-      accessorKey: "totalUnpaid" as const,
+      accessorKey: "totalUnpaid",
       cell: (row: { totalUnpaid: number }) => `$${row.totalUnpaid.toFixed(2)}`,
       sortable: true,
     },
     {
       header: "Actions",
-      accessorKey: "id" as const,
+      accessorKey: "id",
       cell: (row: { id: string; name: string; totalUnpaid: number }) => (
         <div className="flex gap-2">
           <Button 
@@ -351,16 +380,16 @@ const Settings = () => {
     },
   ];
 
-  const teacherColumns = [
+  const teacherColumns: TeacherOrDocumentColumn[] = [
     {
       header: "Teacher Name",
-      accessorKey: "name" as const,
+      accessorKey: "name",
       searchable: true,
       sortable: true,
     },
     {
       header: "Actions",
-      accessorKey: "id" as const,
+      accessorKey: "id",
       cell: (row: { id: string; name: string }) => (
         <div className="flex gap-2">
           <Button 
@@ -391,16 +420,16 @@ const Settings = () => {
     },
   ];
 
-  const documentColumns = [
+  const documentColumns: TeacherOrDocumentColumn[] = [
     {
       header: "Document Type",
-      accessorKey: "name" as const,
+      accessorKey: "name",
       searchable: true,
       sortable: true,
     },
     {
       header: "Actions",
-      accessorKey: "id" as const,
+      accessorKey: "id",
       cell: (row: { id: string; name: string }) => (
         <div className="flex gap-2">
           <Button 
