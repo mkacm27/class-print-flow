@@ -1,8 +1,36 @@
+
 # Welcome to your Lovable project
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/74c07614-9352-47b5-beeb-8bdbb2a81325
+
+## Running as a Desktop Application
+
+This application can be run as a desktop application using Electron.
+
+To run the application in development mode:
+```sh
+# Install dependencies
+npm i
+
+# Start the development server
+npm run dev
+
+# In another terminal, start Electron
+npx electron electron/main.js
+```
+
+To build the application as an executable:
+```sh
+# Build the React application
+npm run build
+
+# Package with electron-builder
+npx electron-builder --config electron-builder.json
+```
+
+The packaged application will be available in the `release` directory.
 
 ## How can I edit this code?
 
