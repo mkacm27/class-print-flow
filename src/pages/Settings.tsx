@@ -5,7 +5,11 @@ import { GeneralSettingsTab } from "@/components/settings/GeneralSettingsTab";
 import { ClassesTab } from "@/components/settings/ClassesTab";
 import { TeachersTab } from "@/components/settings/TeachersTab";
 import { DocumentTypesTab } from "@/components/settings/DocumentTypesTab";
-import { getSettings, updateSettings, backupData, restoreData } from "@/lib/db";
+import { getSettings, updateSettings } from "@/lib/db";
+import { backupData, restoreData } from "@/lib/backup";
+import { getClasses, addClass, updateClass, deleteClass } from "@/lib/classes";
+import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from "@/lib/teachers";
+import { getDocumentTypes, addDocumentType, updateDocumentType, deleteDocumentType } from "@/lib/document-types";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Upload, AlertTriangle } from "lucide-react";
@@ -28,11 +32,20 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const { toast } = useToast();
-
+  
+  const [classes, setClasses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
+  
   useEffect(() => {
     // Load settings on component mount
     const loadedSettings = getSettings();
     setSettings(loadedSettings);
+    
+    // Load data for other tabs
+    setClasses(getClasses());
+    setTeachers(getTeachers());
+    setDocumentTypes(getDocumentTypes());
   }, []);
 
   const handleUpdateSettings = (updatedSettings: SettingsType) => {
@@ -42,6 +55,99 @@ const Settings = () => {
     toast({
       title: "Settings updated",
       description: "Your settings have been saved successfully.",
+      variant: "default",
+    });
+  };
+
+  // Class handlers
+  const handleAddClass = (name: string, whatsappContact?: string) => {
+    const newClass = addClass(name, whatsappContact);
+    setClasses(getClasses());
+    toast({
+      title: "Class added",
+      description: `${name} has been added successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleUpdateClass = (id: string, name: string, whatsappContact?: string) => {
+    updateClass(id, name, whatsappContact);
+    setClasses(getClasses());
+    toast({
+      title: "Class updated",
+      description: `${name} has been updated successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleDeleteClass = (id: string) => {
+    deleteClass(id);
+    setClasses(getClasses());
+    toast({
+      title: "Class deleted",
+      description: "The class has been deleted successfully.",
+      variant: "default",
+    });
+  };
+
+  // Teacher handlers
+  const handleAddTeacher = (name: string) => {
+    const newTeacher = addTeacher(name);
+    setTeachers(getTeachers());
+    toast({
+      title: "Teacher added",
+      description: `${name} has been added successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleUpdateTeacher = (id: string, name: string) => {
+    updateTeacher({ id, name });
+    setTeachers(getTeachers());
+    toast({
+      title: "Teacher updated",
+      description: `${name} has been updated successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleDeleteTeacher = (id: string) => {
+    deleteTeacher(id);
+    setTeachers(getTeachers());
+    toast({
+      title: "Teacher deleted",
+      description: "The teacher has been deleted successfully.",
+      variant: "default",
+    });
+  };
+
+  // Document type handlers
+  const handleAddDocumentType = (name: string) => {
+    const newDocType = addDocumentType(name);
+    setDocumentTypes(getDocumentTypes());
+    toast({
+      title: "Document type added",
+      description: `${name} has been added successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleUpdateDocumentType = (id: string, name: string) => {
+    updateDocumentType({ id, name });
+    setDocumentTypes(getDocumentTypes());
+    toast({
+      title: "Document type updated",
+      description: `${name} has been updated successfully.`,
+      variant: "default",
+    });
+  };
+
+  const handleDeleteDocumentType = (id: string) => {
+    deleteDocumentType(id);
+    setDocumentTypes(getDocumentTypes());
+    toast({
+      title: "Document type deleted",
+      description: "The document type has been deleted successfully.",
       variant: "default",
     });
   };
@@ -113,8 +219,11 @@ const Settings = () => {
         const parsedData = JSON.parse(tempData);
         restoreData(parsedData);
         
-        // Update the local state with the new settings
+        // Refresh all data
         setSettings(getSettings());
+        setClasses(getClasses());
+        setTeachers(getTeachers());
+        setDocumentTypes(getDocumentTypes());
         
         // Clean up the temp storage
         window.localStorage.removeItem('tempBackupData');
@@ -179,13 +288,28 @@ const Settings = () => {
           />
         </TabsContent>
         <TabsContent value="classes" className="py-4">
-          <ClassesTab />
+          <ClassesTab 
+            classes={classes} 
+            onAddClass={handleAddClass}
+            onUpdateClass={handleUpdateClass}
+            onDeleteClass={handleDeleteClass}
+          />
         </TabsContent>
         <TabsContent value="teachers" className="py-4">
-          <TeachersTab />
+          <TeachersTab 
+            teachers={teachers}
+            onAddTeacher={handleAddTeacher}
+            onUpdateTeacher={handleUpdateTeacher}
+            onDeleteTeacher={handleDeleteTeacher}
+          />
         </TabsContent>
         <TabsContent value="documents" className="py-4">
-          <DocumentTypesTab />
+          <DocumentTypesTab 
+            documentTypes={documentTypes}
+            onAddDocumentType={handleAddDocumentType}
+            onUpdateDocumentType={handleUpdateDocumentType}
+            onDeleteDocumentType={handleDeleteDocumentType}
+          />
         </TabsContent>
       </Tabs>
 

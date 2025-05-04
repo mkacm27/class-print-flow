@@ -219,12 +219,12 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
                       <FormLabel>WhatsApp Message Template</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Hello! Your print job receipt {{serialNumber}} for {{className}} is ready. Total amount: {{totalPrice}}." 
+                          placeholder="Hello! Your print job receipt #{{serialNumber}} for {{className}} is ready. Total amount: ${{totalPrice}}." 
                           {...field} 
                         />
                       </FormControl>
                       <FormDescription>
-                        You can use placeholders like {{serialNumber}}, {{className}}, and {{totalPrice}}
+                        You can use placeholders: &#123;&#123;serialNumber&#125;&#125;, &#123;&#123;className&#125;&#125;, and &#123;&#123;totalPrice&#125;&#125;
                       </FormDescription>
                     </FormItem>
                   )}
