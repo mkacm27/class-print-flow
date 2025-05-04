@@ -51,7 +51,10 @@ export const ClassFormDialog: React.FC<ClassFormDialogProps> = ({
   });
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
-    onSubmit(values);
+    onSubmit({
+      name: values.name,
+      whatsappContact: values.whatsappContact,
+    });
     form.reset();
   };
 

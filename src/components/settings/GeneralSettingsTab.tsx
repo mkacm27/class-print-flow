@@ -224,7 +224,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
                         />
                       </FormControl>
                       <FormDescription>
-                        You can use {{serialNumber}}, {{className}}, and {{totalPrice}} placeholders
+                        You can use placeholders like {{serialNumber}}, {{className}}, and {{totalPrice}}
                       </FormDescription>
                     </FormItem>
                   )}

@@ -4,7 +4,13 @@
 
 // Check if we're in Electron
 export const isElectron = (): boolean => {
-  return window && window.process && window.process.type === 'renderer';
+  // Safe check for Electron environment
+  return !!(
+    window && 
+    window.process && 
+    window.process.versions && 
+    window.process.versions.electron
+  );
 };
 
 // Safe wrapper for electron-specific file operations

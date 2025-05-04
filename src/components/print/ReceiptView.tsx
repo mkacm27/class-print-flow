@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -18,7 +17,7 @@ import {
   sendWhatsAppNotification 
 } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowLeft, FilePdf, Download, Printer, Send, Whatsapp } from "lucide-react";
+import { Check, ArrowLeft, FileText, Printer, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { generatePDFReceipt, savePDFToLocalFolder } from "@/utils/pdf-utils";
@@ -275,11 +274,11 @@ const ReceiptView = () => {
               Print
             </Button>
             <Button onClick={handleSavePDF} variant="outline" className="flex-1 gap-2">
-              <FilePdf className="w-4 h-4" />
+              <FileText className="w-4 h-4" />
               Save PDF
             </Button>
             <Button onClick={handleShare} className="flex-1 gap-2">
-              <Whatsapp className="w-4 h-4" />
+              <Send className="w-4 h-4" />
               WhatsApp
             </Button>
           </div>

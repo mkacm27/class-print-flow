@@ -1,349 +1,211 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  getSettings, 
-  updateSettings,
-  getClasses, 
-  addClass, 
-  updateClass, 
-  deleteClass,
-  getTeachers, 
-  addTeacher, 
-  updateTeacher, 
-  deleteTeacher,
-  getDocumentTypes, 
-  addDocumentType, 
-  updateDocumentType, 
-  deleteDocumentType,
-  exportData,
-  importData,
-  Settings as SettingsType
-} from "@/lib/db";
-
-// Import our refactored components
 import { GeneralSettingsTab } from "@/components/settings/GeneralSettingsTab";
 import { ClassesTab } from "@/components/settings/ClassesTab";
 import { TeachersTab } from "@/components/settings/TeachersTab";
 import { DocumentTypesTab } from "@/components/settings/DocumentTypesTab";
+import { getSettings, updateSettings, backupData, restoreData } from "@/lib/db";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Download, Upload, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { Settings as SettingsType } from "@/lib/types";
 
 const Settings = () => {
+  const [settings, setSettings] = useState<SettingsType>({
+    shopName: "",
+    contactInfo: "",
+    priceRecto: 0.10,
+    priceRectoVerso: 0.15,
+    priceBoth: 0.25,
+    maxUnpaidThreshold: 100,
+    whatsappTemplate: "",
+    defaultSavePath: "",
+    enableAutoPdfSave: true,
+    enableWhatsappNotification: true
+  });
   const [activeTab, setActiveTab] = useState("general");
-  const [classes, setClasses] = useState<{ id: string; name: string; totalUnpaid: number }[]>([]);
-  const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
-  const [documentTypes, setDocumentTypes] = useState<{ id: string; name: string }[]>([]);
+  const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const { toast } = useToast();
-  
-  // Load settings and data
+
   useEffect(() => {
-    loadData();
+    // Load settings on component mount
+    const loadedSettings = getSettings();
+    setSettings(loadedSettings);
   }, []);
 
-  const loadData = () => {
-    setClasses(getClasses());
-    setTeachers(getTeachers());
-    setDocumentTypes(getDocumentTypes());
-  };
-
-  const onSaveSettings = (data: SettingsType) => {
-    updateSettings(data);
+  const handleUpdateSettings = (updatedSettings: SettingsType) => {
+    updateSettings(updatedSettings);
+    setSettings(updatedSettings);
+    
     toast({
-      title: "Settings saved",
-      description: "Your settings have been updated successfully.",
+      title: "Settings updated",
+      description: "Your settings have been saved successfully.",
+      variant: "default",
     });
   };
 
   const handleExport = () => {
     try {
-      const data = exportData();
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const date = new Date().toISOString().split('T')[0];
-      a.href = url;
-      a.download = `printease-backup-${date}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const backup = backupData();
+      
+      // Create a download for the backup JSON
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "print-shop-backup.json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
       
       toast({
-        title: "Data exported",
+        title: "Backup created",
         description: "Your data has been exported successfully.",
+        variant: "default",
       });
     } catch (error) {
+      console.error("Failed to export data:", error);
       toast({
         title: "Export failed",
-        description: "Failed to export data.",
+        description: "Could not create the backup file.",
         variant: "destructive",
       });
     }
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
     
+    const file = event.target.files[0];
     const reader = new FileReader();
+    
     reader.onload = (e) => {
       try {
-        const content = e.target?.result as string;
-        const success = importData(content);
-        
-        if (success) {
-          loadData();
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          const parsedData = JSON.parse(result);
+          // Open confirmation dialog
+          setIsRestoreDialogOpen(true);
           
-          toast({
-            title: "Data imported",
-            description: "Your data has been imported successfully.",
-          });
-        } else {
-          toast({
-            title: "Import failed",
-            description: "Invalid backup file format.",
-            variant: "destructive",
-          });
+          // Store the data temporarily
+          window.localStorage.setItem('tempBackupData', result);
         }
       } catch (error) {
+        console.error("Failed to parse backup file:", error);
         toast({
           title: "Import failed",
-          description: "Failed to import data.",
+          description: "The selected file is not a valid backup.",
           variant: "destructive",
         });
       }
     };
-    reader.readAsText(file);
     
-    // Reset the input value to allow selecting the same file again
-    event.target.value = '';
+    reader.readAsText(file);
   };
 
-  // Classes handlers
-  const handleAddClass = (name: string) => {
+  const confirmRestore = () => {
     try {
-      addClass(name);
-      loadData();
-      toast({
-        title: "Class added",
-        description: "New class has been added successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add class.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateClass = (id: string, name: string) => {
-    try {
-      const classToUpdate = classes.find(c => c.id === id);
-      if (classToUpdate) {
-        updateClass({ ...classToUpdate, name });
-        loadData();
+      const tempData = window.localStorage.getItem('tempBackupData');
+      if (tempData) {
+        const parsedData = JSON.parse(tempData);
+        restoreData(parsedData);
+        
+        // Update the local state with the new settings
+        setSettings(getSettings());
+        
+        // Clean up the temp storage
+        window.localStorage.removeItem('tempBackupData');
+        
         toast({
-          title: "Class updated",
-          description: "Class has been updated successfully.",
+          title: "Data restored",
+          description: "Your backup has been imported successfully.",
+          variant: "default",
         });
       }
     } catch (error) {
+      console.error("Failed to restore data:", error);
       toast({
-        title: "Error",
-        description: "Failed to update class.",
+        title: "Restore failed",
+        description: "Could not import the backup data.",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleDeleteClass = (id: string) => {
-    try {
-      const classToDelete = classes.find(c => c.id === id);
-      if (classToDelete && classToDelete.totalUnpaid > 0) {
-        toast({
-          title: "Cannot delete class",
-          description: "This class has unpaid balances. Please clear all balances before deleting.",
-          variant: "destructive",
-        });
-        return;
-      }
-      deleteClass(id);
-      loadData();
-      toast({
-        title: "Class deleted",
-        description: "Class has been deleted successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete class.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Teachers handlers
-  const handleAddTeacher = (name: string) => {
-    try {
-      addTeacher(name);
-      loadData();
-      toast({
-        title: "Teacher added",
-        description: "New teacher has been added successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add teacher.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateTeacher = (id: string, name: string) => {
-    try {
-      updateTeacher({ id, name });
-      loadData();
-      toast({
-        title: "Teacher updated",
-        description: "Teacher has been updated successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update teacher.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteTeacher = (id: string) => {
-    try {
-      deleteTeacher(id);
-      loadData();
-      toast({
-        title: "Teacher deleted",
-        description: "Teacher has been deleted successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete teacher.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Document types handlers
-  const handleAddDocumentType = (name: string) => {
-    try {
-      addDocumentType(name);
-      loadData();
-      toast({
-        title: "Document type added",
-        description: "New document type has been added successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add document type.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateDocumentType = (id: string, name: string) => {
-    try {
-      updateDocumentType({ id, name });
-      loadData();
-      toast({
-        title: "Document type updated",
-        description: "Document type has been updated successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update document type.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteDocumentType = (id: string) => {
-    try {
-      deleteDocumentType(id);
-      loadData();
-      toast({
-        title: "Document type deleted",
-        description: "Document type has been deleted successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete document type.",
-        variant: "destructive",
-      });
+    } finally {
+      setIsRestoreDialogOpen(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-bold mb-1">Settings</h1>
-          <p className="text-gray-500">Configure your print shop preferences</p>
+          <p className="text-gray-500">Configure your print shop application</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0">
+          <Button variant="outline" className="gap-2" onClick={handleExport}>
+            <Download className="w-4 h-4" />
+            Export Data
+          </Button>
+          <div className="relative">
+            <input
+              type="file"
+              id="import-backup"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              accept=".json"
+              onChange={handleImport}
+            />
+            <Button variant="outline" className="gap-2 w-full">
+              <Upload className="w-4 h-4" />
+              Import Data
+            </Button>
+          </div>
         </div>
       </div>
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="w-full border-b rounded-none justify-start">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="classes">Classes</TabsTrigger>
           <TabsTrigger value="teachers">Teachers</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="documents">Document Types</TabsTrigger>
         </TabsList>
-        
-        {/* General Settings */}
-        <TabsContent value="general">
+        <TabsContent value="general" className="py-4">
           <GeneralSettingsTab 
-            settings={getSettings()}
-            onSaveSettings={onSaveSettings}
-            onExport={handleExport}
-            onImport={handleImport}
+            settings={settings} 
+            onUpdateSettings={handleUpdateSettings} 
           />
         </TabsContent>
-        
-        {/* Classes Tab */}
-        <TabsContent value="classes">
-          <ClassesTab
-            classes={classes}
-            onAddClass={handleAddClass}
-            onUpdateClass={handleUpdateClass}
-            onDeleteClass={handleDeleteClass}
-          />
+        <TabsContent value="classes" className="py-4">
+          <ClassesTab />
         </TabsContent>
-        
-        {/* Teachers Tab */}
-        <TabsContent value="teachers">
-          <TeachersTab
-            teachers={teachers}
-            onAddTeacher={handleAddTeacher}
-            onUpdateTeacher={handleUpdateTeacher}
-            onDeleteTeacher={handleDeleteTeacher}
-          />
+        <TabsContent value="teachers" className="py-4">
+          <TeachersTab />
         </TabsContent>
-        
-        {/* Document Types Tab */}
-        <TabsContent value="documents">
-          <DocumentTypesTab
-            documentTypes={documentTypes}
-            onAddDocumentType={handleAddDocumentType}
-            onUpdateDocumentType={handleUpdateDocumentType}
-            onDeleteDocumentType={handleDeleteDocumentType}
-          />
+        <TabsContent value="documents" className="py-4">
+          <DocumentTypesTab />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-amber-500" />
+              Confirm Data Restore
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace all your current data with the backup. This action cannot be undone. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRestore}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
