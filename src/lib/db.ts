@@ -9,9 +9,6 @@ export * from './settings';
 export * from './backup';
 export * from './electron-bridge';
 
-// Import and re-export database-related modules
-export * from './db/database';
-
 // Import and re-export initializeData
 import { initializeData } from './defaults';
 export { initializeData };
