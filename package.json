@@ -44,6 +44,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
+    "dexie": "^3.2.7",
     "electron-builder": "^26.0.12",
     "embla-carousel-react": "^8.3.0",
     "input-otp": "^1.2.4",
@@ -62,6 +63,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^9.0.1",
     "vaul": "^0.9.3",
+    "vite-plugin-pwa": "^0.19.8",
     "zod": "^3.23.8"
   },
   "devDependencies": {
