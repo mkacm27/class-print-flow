@@ -1,55 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { DataTable } from "@/components/ui/data-table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  Save, 
-  Plus, 
-  Download, 
-  Upload, 
-  Trash2, 
-  Edit,
-  Settings as SettingsIcon
-} from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   getSettings, 
   updateSettings,
@@ -70,71 +22,23 @@ import {
   Settings as SettingsType
 } from "@/lib/db";
 
-const settingsSchema = z.object({
-  shopName: z.string().min(1, { message: "Shop name is required" }),
-  contactInfo: z.string(),
-  priceRecto: z.coerce.number().nonnegative({ message: "Price must be positive" }),
-  priceRectoVerso: z.coerce.number().nonnegative({ message: "Price must be positive" }),
-  priceBoth: z.coerce.number().nonnegative({ message: "Price must be positive" }),
-  maxUnpaidThreshold: z.coerce.number().nonnegative({ message: "Threshold must be positive" }),
-  whatsappTemplate: z.string(),
-});
-
-// Schema for the dialog forms
-const itemNameSchema = z.object({
-  itemName: z.string().min(1, { message: "Name cannot be empty" }),
-});
-
-type SettingsFormValues = z.infer<typeof settingsSchema>;
-type ItemFormValues = z.infer<typeof itemNameSchema>;
+// Import our refactored components
+import { GeneralSettingsTab } from "@/components/settings/GeneralSettingsTab";
+import { ClassesTab } from "@/components/settings/ClassesTab";
+import { TeachersTab } from "@/components/settings/TeachersTab";
+import { DocumentTypesTab } from "@/components/settings/DocumentTypesTab";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [classes, setClasses] = useState<{ id: string; name: string; totalUnpaid: number }[]>([]);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [documentTypes, setDocumentTypes] = useState<{ id: string; name: string }[]>([]);
-  const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<"class" | "teacher" | "document">("class");
   const { toast } = useToast();
-  
-  const form = useForm<SettingsFormValues>({
-    resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      shopName: "",
-      contactInfo: "",
-      priceRecto: 0.10,
-      priceRectoVerso: 0.15,
-      priceBoth: 0.25,
-      maxUnpaidThreshold: 100,
-      whatsappTemplate: "Hello! Here is your receipt from PrintEase: {{serialNumber}}. Total: {{totalPrice}}. Thank you!",
-    },
-  });
-
-  // Create a separate form for dialog inputs
-  const dialogForm = useForm<ItemFormValues>({
-    resolver: zodResolver(itemNameSchema),
-    defaultValues: {
-      itemName: "",
-    }
-  });
   
   // Load settings and data
   useEffect(() => {
-    const settings = getSettings();
-    form.reset(settings);
-    
     loadData();
   }, []);
-
-  // Reset dialog form when editing item changes
-  useEffect(() => {
-    if (editingItem) {
-      dialogForm.reset({ itemName: editingItem.name });
-    } else {
-      dialogForm.reset({ itemName: "" });
-    }
-  }, [editingItem]);
 
   const loadData = () => {
     setClasses(getClasses());
@@ -142,119 +46,12 @@ const Settings = () => {
     setDocumentTypes(getDocumentTypes());
   };
 
-  const onSaveSettings = (data: SettingsFormValues) => {
-    // Make sure all required fields are present and have values
-    const updatedSettings: SettingsType = {
-      shopName: data.shopName,
-      contactInfo: data.contactInfo || "",
-      priceRecto: data.priceRecto,
-      priceRectoVerso: data.priceRectoVerso,
-      priceBoth: data.priceBoth,
-      maxUnpaidThreshold: data.maxUnpaidThreshold,
-      whatsappTemplate: data.whatsappTemplate || "Hello! Here is your receipt from PrintEase: {{serialNumber}}. Total: {{totalPrice}}. Thank you!",
-    };
-
-    updateSettings(updatedSettings);
+  const onSaveSettings = (data: SettingsType) => {
+    updateSettings(data);
     toast({
       title: "Settings saved",
       description: "Your settings have been updated successfully.",
     });
-  };
-
-  const handleAddItem = (data: ItemFormValues) => {
-    try {
-      if (dialogType === "class") {
-        addClass(data.itemName);
-      } else if (dialogType === "teacher") {
-        addTeacher(data.itemName);
-      } else if (dialogType === "document") {
-        addDocumentType(data.itemName);
-      }
-      
-      dialogForm.reset();
-      loadData();
-      setIsDialogOpen(false);
-      
-      toast({
-        title: "Item added",
-        description: `New ${dialogType} has been added successfully.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to add ${dialogType}.`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateItem = (data: ItemFormValues) => {
-    if (!editingItem) {
-      return;
-    }
-    
-    try {
-      if (dialogType === "class") {
-        const classToUpdate = classes.find(c => c.id === editingItem.id);
-        if (classToUpdate) {
-          updateClass({ ...classToUpdate, name: data.itemName });
-        }
-      } else if (dialogType === "teacher") {
-        updateTeacher({ id: editingItem.id, name: data.itemName });
-      } else if (dialogType === "document") {
-        updateDocumentType({ id: editingItem.id, name: data.itemName });
-      }
-      
-      dialogForm.reset();
-      setEditingItem(null);
-      loadData();
-      setIsDialogOpen(false);
-      
-      toast({
-        title: "Item updated",
-        description: `${dialogType} has been updated successfully.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to update ${dialogType}.`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteItem = (id: string, type: "class" | "teacher" | "document") => {
-    try {
-      if (type === "class") {
-        const classToDelete = classes.find(c => c.id === id);
-        if (classToDelete && classToDelete.totalUnpaid > 0) {
-          toast({
-            title: "Cannot delete class",
-            description: "This class has unpaid balances. Please clear all balances before deleting.",
-            variant: "destructive",
-          });
-          return;
-        }
-        deleteClass(id);
-      } else if (type === "teacher") {
-        deleteTeacher(id);
-      } else if (type === "document") {
-        deleteDocumentType(id);
-      }
-      
-      loadData();
-      
-      toast({
-        title: "Item deleted",
-        description: `${type} has been deleted successfully.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to delete ${type}.`,
-        variant: "destructive",
-      });
-    }
   };
 
   const handleExport = () => {
@@ -295,7 +92,6 @@ const Settings = () => {
         const success = importData(content);
         
         if (success) {
-          form.reset(getSettings());
           loadData();
           
           toast({
@@ -323,147 +119,173 @@ const Settings = () => {
     event.target.value = '';
   };
 
-  // Define column types correctly
-  type ClassColumn = {
-    header: string;
-    accessorKey: keyof { id: string; name: string; totalUnpaid: number };
-    cell?: (row: any) => React.ReactNode;
-    searchable?: boolean;
-    sortable?: boolean;
-  }
+  // Classes handlers
+  const handleAddClass = (name: string) => {
+    try {
+      addClass(name);
+      loadData();
+      toast({
+        title: "Class added",
+        description: "New class has been added successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add class.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  type TeacherOrDocumentColumn = {
-    header: string;
-    accessorKey: keyof { id: string; name: string };
-    cell?: (row: any) => React.ReactNode;
-    searchable?: boolean;
-    sortable?: boolean;
-  }
+  const handleUpdateClass = (id: string, name: string) => {
+    try {
+      const classToUpdate = classes.find(c => c.id === id);
+      if (classToUpdate) {
+        updateClass({ ...classToUpdate, name });
+        loadData();
+        toast({
+          title: "Class updated",
+          description: "Class has been updated successfully.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update class.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  // Column definitions for the data tables
-  const classColumns: ClassColumn[] = [
-    {
-      header: "Class Name",
-      accessorKey: "name",
-      searchable: true,
-      sortable: true,
-    },
-    {
-      header: "Unpaid Balance",
-      accessorKey: "totalUnpaid",
-      cell: (row: { totalUnpaid: number }) => `$${row.totalUnpaid.toFixed(2)}`,
-      sortable: true,
-    },
-    {
-      header: "Actions",
-      accessorKey: "id",
-      cell: (row: { id: string; name: string; totalUnpaid: number }) => (
-        <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDialogType("class");
-              setEditingItem({ id: row.id, name: row.name });
-              setIsDialogOpen(true);
-            }}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteItem(row.id, "class");
-            }}
-            disabled={row.totalUnpaid > 0}
-          >
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const handleDeleteClass = (id: string) => {
+    try {
+      const classToDelete = classes.find(c => c.id === id);
+      if (classToDelete && classToDelete.totalUnpaid > 0) {
+        toast({
+          title: "Cannot delete class",
+          description: "This class has unpaid balances. Please clear all balances before deleting.",
+          variant: "destructive",
+        });
+        return;
+      }
+      deleteClass(id);
+      loadData();
+      toast({
+        title: "Class deleted",
+        description: "Class has been deleted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete class.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  const teacherColumns: TeacherOrDocumentColumn[] = [
-    {
-      header: "Teacher Name",
-      accessorKey: "name",
-      searchable: true,
-      sortable: true,
-    },
-    {
-      header: "Actions",
-      accessorKey: "id",
-      cell: (row: { id: string; name: string }) => (
-        <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDialogType("teacher");
-              setEditingItem({ id: row.id, name: row.name });
-              setIsDialogOpen(true);
-            }}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteItem(row.id, "teacher");
-            }}
-          >
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  // Teachers handlers
+  const handleAddTeacher = (name: string) => {
+    try {
+      addTeacher(name);
+      loadData();
+      toast({
+        title: "Teacher added",
+        description: "New teacher has been added successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add teacher.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  const documentColumns: TeacherOrDocumentColumn[] = [
-    {
-      header: "Document Type",
-      accessorKey: "name",
-      searchable: true,
-      sortable: true,
-    },
-    {
-      header: "Actions",
-      accessorKey: "id",
-      cell: (row: { id: string; name: string }) => (
-        <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDialogType("document");
-              setEditingItem({ id: row.id, name: row.name });
-              setIsDialogOpen(true);
-            }}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteItem(row.id, "document");
-            }}
-          >
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const handleUpdateTeacher = (id: string, name: string) => {
+    try {
+      updateTeacher({ id, name });
+      loadData();
+      toast({
+        title: "Teacher updated",
+        description: "Teacher has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update teacher.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTeacher = (id: string) => {
+    try {
+      deleteTeacher(id);
+      loadData();
+      toast({
+        title: "Teacher deleted",
+        description: "Teacher has been deleted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete teacher.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Document types handlers
+  const handleAddDocumentType = (name: string) => {
+    try {
+      addDocumentType(name);
+      loadData();
+      toast({
+        title: "Document type added",
+        description: "New document type has been added successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add document type.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateDocumentType = (id: string, name: string) => {
+    try {
+      updateDocumentType({ id, name });
+      loadData();
+      toast({
+        title: "Document type updated",
+        description: "Document type has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update document type.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteDocumentType = (id: string) => {
+    try {
+      deleteDocumentType(id);
+      loadData();
+      toast({
+        title: "Document type deleted",
+        description: "Document type has been deleted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete document type.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -484,442 +306,42 @@ const Settings = () => {
         
         {/* General Settings */}
         <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Shop Information</CardTitle>
-                  <CardDescription>Configure your shop details and pricing</CardDescription>
-                </div>
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <SettingsIcon className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSaveSettings)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="shopName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Shop Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="PrintEase Print Shop" />
-                          </FormControl>
-                          <FormDescription>
-                            This will appear on receipts and documents
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="contactInfo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Contact Information</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Email, phone number, or location" />
-                          </FormControl>
-                          <FormDescription>
-                            Contact details to display on receipts
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Pricing</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="priceRecto"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price per Recto Page</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute left-3 top-2.5">$</span>
-                                <Input {...field} type="number" step="0.01" className="pl-7" />
-                              </div>
-                            </FormControl>
-                            <FormDescription>
-                              Price for single-sided printing
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="priceRectoVerso"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price per Recto-Verso Page</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute left-3 top-2.5">$</span>
-                                <Input {...field} type="number" step="0.01" className="pl-7" />
-                              </div>
-                            </FormControl>
-                            <FormDescription>
-                              Price for double-sided printing
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="priceBoth"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price per Mixed Page</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute left-3 top-2.5">$</span>
-                                <Input {...field} type="number" step="0.01" className="pl-7" />
-                              </div>
-                            </FormControl>
-                            <FormDescription>
-                              Price for mixed printing types
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="maxUnpaidThreshold"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Maximum Unpaid Threshold</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute left-3 top-2.5">$</span>
-                              <Input {...field} type="number" step="1" className="pl-7" />
-                            </div>
-                          </FormControl>
-                          <FormDescription>
-                            Warning threshold for unpaid class balances
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="whatsappTemplate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>WhatsApp Message Template</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              {...field} 
-                              placeholder="Hello! Here is your receipt from PrintEase: {{serialNumber}}. Total: {{totalPrice}}. Thank you!" 
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Use {'{{serialNumber}}'} and {'{{totalPrice}}'} as placeholders
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <Separator className="my-4" />
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Backup and Restore</h3>
-                    <div className="flex flex-wrap gap-4">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        className="gap-2"
-                        onClick={handleExport}
-                      >
-                        <Download className="w-4 h-4" />
-                        Export Data
-                      </Button>
-                      
-                      <div className="relative">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="gap-2"
-                          onClick={() => document.getElementById('file-upload')?.click()}
-                        >
-                          <Upload className="w-4 h-4" />
-                          Import Data
-                        </Button>
-                        <input
-                          id="file-upload"
-                          type="file"
-                          accept=".json"
-                          className="absolute inset-0 opacity-0 w-0 h-0"
-                          onChange={handleImport}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button type="submit" className="gap-2">
-                      <Save className="w-4 h-4" />
-                      Save Settings
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+          <GeneralSettingsTab 
+            settings={getSettings()}
+            onSaveSettings={onSaveSettings}
+            onExport={handleExport}
+            onImport={handleImport}
+          />
         </TabsContent>
         
         {/* Classes Tab */}
         <TabsContent value="classes">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Classes</CardTitle>
-                  <CardDescription>Manage your classes</CardDescription>
-                </div>
-                <Dialog open={isDialogOpen && dialogType === "class"} onOpenChange={(open) => {
-                  setIsDialogOpen(open);
-                  if (!open) {
-                    setEditingItem(null);
-                    dialogForm.reset();
-                  }
-                }}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      onClick={() => {
-                        setDialogType("class");
-                        setEditingItem(null);
-                        dialogForm.reset();
-                      }}
-                      className="gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Class
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingItem ? "Edit Class" : "Add New Class"}</DialogTitle>
-                      <DialogDescription>
-                        {editingItem ? "Update the class name." : "Enter a name for the new class."}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...dialogForm}>
-                      <form onSubmit={dialogForm.handleSubmit(editingItem ? handleUpdateItem : handleAddItem)}>
-                        <div className="py-4">
-                          <FormField
-                            control={dialogForm.control}
-                            name="itemName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Class Name</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field}
-                                    placeholder="e.g., Biology 101" 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                            Cancel
-                          </Button>
-                          <Button type="submit">
-                            {editingItem ? "Update" : "Add"}
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable data={classes} columns={classColumns} />
-            </CardContent>
-          </Card>
+          <ClassesTab
+            classes={classes}
+            onAddClass={handleAddClass}
+            onUpdateClass={handleUpdateClass}
+            onDeleteClass={handleDeleteClass}
+          />
         </TabsContent>
         
         {/* Teachers Tab */}
         <TabsContent value="teachers">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Teachers</CardTitle>
-                  <CardDescription>Manage your teachers</CardDescription>
-                </div>
-                <Dialog open={isDialogOpen && dialogType === "teacher"} onOpenChange={(open) => {
-                  setIsDialogOpen(open);
-                  if (!open) {
-                    setEditingItem(null);
-                    dialogForm.reset();
-                  }
-                }}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      onClick={() => {
-                        setDialogType("teacher");
-                        setEditingItem(null);
-                        dialogForm.reset();
-                      }}
-                      className="gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Teacher
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingItem ? "Edit Teacher" : "Add New Teacher"}</DialogTitle>
-                      <DialogDescription>
-                        {editingItem ? "Update the teacher name." : "Enter a name for the new teacher."}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...dialogForm}>
-                      <form onSubmit={dialogForm.handleSubmit(editingItem ? handleUpdateItem : handleAddItem)}>
-                        <div className="py-4">
-                          <FormField
-                            control={dialogForm.control}
-                            name="itemName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Teacher Name</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field}
-                                    placeholder="e.g., Dr. Smith" 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                            Cancel
-                          </Button>
-                          <Button type="submit">
-                            {editingItem ? "Update" : "Add"}
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable data={teachers} columns={teacherColumns} />
-            </CardContent>
-          </Card>
+          <TeachersTab
+            teachers={teachers}
+            onAddTeacher={handleAddTeacher}
+            onUpdateTeacher={handleUpdateTeacher}
+            onDeleteTeacher={handleDeleteTeacher}
+          />
         </TabsContent>
         
         {/* Document Types Tab */}
         <TabsContent value="documents">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Document Types</CardTitle>
-                  <CardDescription>Manage document categories</CardDescription>
-                </div>
-                <Dialog open={isDialogOpen && dialogType === "document"} onOpenChange={(open) => {
-                  setIsDialogOpen(open);
-                  if (!open) {
-                    setEditingItem(null);
-                    dialogForm.reset();
-                  }
-                }}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      onClick={() => {
-                        setDialogType("document");
-                        setEditingItem(null);
-                        dialogForm.reset();
-                      }}
-                      className="gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Document Type
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingItem ? "Edit Document Type" : "Add New Document Type"}</DialogTitle>
-                      <DialogDescription>
-                        {editingItem ? "Update the document type." : "Enter a name for the new document type."}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...dialogForm}>
-                      <form onSubmit={dialogForm.handleSubmit(editingItem ? handleUpdateItem : handleAddItem)}>
-                        <div className="py-4">
-                          <FormField
-                            control={dialogForm.control}
-                            name="itemName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Document Type</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field}
-                                    placeholder="e.g., Exam" 
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                            Cancel
-                          </Button>
-                          <Button type="submit">
-                            {editingItem ? "Update" : "Add"}
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable data={documentTypes} columns={documentColumns} />
-            </CardContent>
-          </Card>
+          <DocumentTypesTab
+            documentTypes={documentTypes}
+            onAddDocumentType={handleAddDocumentType}
+            onUpdateDocumentType={handleUpdateDocumentType}
+            onDeleteDocumentType={handleDeleteDocumentType}
+          />
         </TabsContent>
       </Tabs>
     </div>
