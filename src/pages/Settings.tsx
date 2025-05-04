@@ -80,14 +80,19 @@ const settingsSchema = z.object({
   whatsappTemplate: z.string(),
 });
 
+// Schema for the dialog forms
+const itemNameSchema = z.object({
+  itemName: z.string().min(1, { message: "Name cannot be empty" }),
+});
+
 type SettingsFormValues = z.infer<typeof settingsSchema>;
+type ItemFormValues = z.infer<typeof itemNameSchema>;
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [classes, setClasses] = useState<{ id: string; name: string; totalUnpaid: number }[]>([]);
   const [teachers, setTeachers] = useState<{ id: string; name: string }[]>([]);
   const [documentTypes, setDocumentTypes] = useState<{ id: string; name: string }[]>([]);
-  const [newItemName, setNewItemName] = useState("");
   const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"class" | "teacher" | "document">("class");
@@ -105,6 +110,14 @@ const Settings = () => {
       whatsappTemplate: "Hello! Here is your receipt from PrintEase: {{serialNumber}}. Total: {{totalPrice}}. Thank you!",
     },
   });
+
+  // Create a separate form for dialog inputs
+  const dialogForm = useForm<ItemFormValues>({
+    resolver: zodResolver(itemNameSchema),
+    defaultValues: {
+      itemName: "",
+    }
+  });
   
   // Load settings and data
   useEffect(() => {
@@ -113,6 +126,15 @@ const Settings = () => {
     
     loadData();
   }, []);
+
+  // Reset dialog form when editing item changes
+  useEffect(() => {
+    if (editingItem) {
+      dialogForm.reset({ itemName: editingItem.name });
+    } else {
+      dialogForm.reset({ itemName: "" });
+    }
+  }, [editingItem]);
 
   const loadData = () => {
     setClasses(getClasses());
@@ -139,26 +161,17 @@ const Settings = () => {
     });
   };
 
-  const handleAddItem = () => {
-    if (!newItemName.trim()) {
-      toast({
-        title: "Error",
-        description: "Name cannot be empty",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const handleAddItem = (data: ItemFormValues) => {
     try {
       if (dialogType === "class") {
-        addClass(newItemName);
+        addClass(data.itemName);
       } else if (dialogType === "teacher") {
-        addTeacher(newItemName);
+        addTeacher(data.itemName);
       } else if (dialogType === "document") {
-        addDocumentType(newItemName);
+        addDocumentType(data.itemName);
       }
       
-      setNewItemName("");
+      dialogForm.reset();
       loadData();
       setIsDialogOpen(false);
       
@@ -175,13 +188,8 @@ const Settings = () => {
     }
   };
 
-  const handleUpdateItem = () => {
-    if (!editingItem || !newItemName.trim()) {
-      toast({
-        title: "Error",
-        description: "Name cannot be empty",
-        variant: "destructive",
-      });
+  const handleUpdateItem = (data: ItemFormValues) => {
+    if (!editingItem) {
       return;
     }
     
@@ -189,15 +197,15 @@ const Settings = () => {
       if (dialogType === "class") {
         const classToUpdate = classes.find(c => c.id === editingItem.id);
         if (classToUpdate) {
-          updateClass({ ...classToUpdate, name: newItemName });
+          updateClass({ ...classToUpdate, name: data.itemName });
         }
       } else if (dialogType === "teacher") {
-        updateTeacher({ id: editingItem.id, name: newItemName });
+        updateTeacher({ id: editingItem.id, name: data.itemName });
       } else if (dialogType === "document") {
-        updateDocumentType({ id: editingItem.id, name: newItemName });
+        updateDocumentType({ id: editingItem.id, name: data.itemName });
       }
       
-      setNewItemName("");
+      dialogForm.reset();
       setEditingItem(null);
       loadData();
       setIsDialogOpen(false);
@@ -358,7 +366,6 @@ const Settings = () => {
               e.stopPropagation();
               setDialogType("class");
               setEditingItem({ id: row.id, name: row.name });
-              setNewItemName(row.name);
               setIsDialogOpen(true);
             }}
           >
@@ -399,7 +406,6 @@ const Settings = () => {
               e.stopPropagation();
               setDialogType("teacher");
               setEditingItem({ id: row.id, name: row.name });
-              setNewItemName(row.name);
               setIsDialogOpen(true);
             }}
           >
@@ -439,7 +445,6 @@ const Settings = () => {
               e.stopPropagation();
               setDialogType("document");
               setEditingItem({ id: row.id, name: row.name });
-              setNewItemName(row.name);
               setIsDialogOpen(true);
             }}
           >
@@ -702,7 +707,7 @@ const Settings = () => {
                   setIsDialogOpen(open);
                   if (!open) {
                     setEditingItem(null);
-                    setNewItemName("");
+                    dialogForm.reset();
                   }
                 }}>
                   <DialogTrigger asChild>
@@ -710,7 +715,7 @@ const Settings = () => {
                       onClick={() => {
                         setDialogType("class");
                         setEditingItem(null);
-                        setNewItemName("");
+                        dialogForm.reset();
                       }}
                       className="gap-2"
                     >
@@ -725,26 +730,36 @@ const Settings = () => {
                         {editingItem ? "Update the class name." : "Enter a name for the new class."}
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                      <FormItem>
-                        <FormLabel>Class Name</FormLabel>
-                        <FormControl>
-                          <Input 
-                            value={newItemName} 
-                            onChange={(e) => setNewItemName(e.target.value)} 
-                            placeholder="e.g., Biology 101" 
+                    <Form {...dialogForm}>
+                      <form onSubmit={dialogForm.handleSubmit(editingItem ? handleUpdateItem : handleAddItem)}>
+                        <div className="py-4">
+                          <FormField
+                            control={dialogForm.control}
+                            name="itemName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Class Name</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field}
+                                    placeholder="e.g., Biology 101" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                      </FormItem>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={editingItem ? handleUpdateItem : handleAddItem}>
-                        {editingItem ? "Update" : "Add"}
-                      </Button>
-                    </DialogFooter>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">
+                            {editingItem ? "Update" : "Add"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
               </div>
@@ -768,7 +783,7 @@ const Settings = () => {
                   setIsDialogOpen(open);
                   if (!open) {
                     setEditingItem(null);
-                    setNewItemName("");
+                    dialogForm.reset();
                   }
                 }}>
                   <DialogTrigger asChild>
@@ -776,7 +791,7 @@ const Settings = () => {
                       onClick={() => {
                         setDialogType("teacher");
                         setEditingItem(null);
-                        setNewItemName("");
+                        dialogForm.reset();
                       }}
                       className="gap-2"
                     >
@@ -791,26 +806,36 @@ const Settings = () => {
                         {editingItem ? "Update the teacher name." : "Enter a name for the new teacher."}
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                      <FormItem>
-                        <FormLabel>Teacher Name</FormLabel>
-                        <FormControl>
-                          <Input 
-                            value={newItemName} 
-                            onChange={(e) => setNewItemName(e.target.value)} 
-                            placeholder="e.g., Dr. Smith" 
+                    <Form {...dialogForm}>
+                      <form onSubmit={dialogForm.handleSubmit(editingItem ? handleUpdateItem : handleAddItem)}>
+                        <div className="py-4">
+                          <FormField
+                            control={dialogForm.control}
+                            name="itemName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Teacher Name</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field}
+                                    placeholder="e.g., Dr. Smith" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                      </FormItem>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={editingItem ? handleUpdateItem : handleAddItem}>
-                        {editingItem ? "Update" : "Add"}
-                      </Button>
-                    </DialogFooter>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">
+                            {editingItem ? "Update" : "Add"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
               </div>
@@ -834,7 +859,7 @@ const Settings = () => {
                   setIsDialogOpen(open);
                   if (!open) {
                     setEditingItem(null);
-                    setNewItemName("");
+                    dialogForm.reset();
                   }
                 }}>
                   <DialogTrigger asChild>
@@ -842,7 +867,7 @@ const Settings = () => {
                       onClick={() => {
                         setDialogType("document");
                         setEditingItem(null);
-                        setNewItemName("");
+                        dialogForm.reset();
                       }}
                       className="gap-2"
                     >
@@ -857,26 +882,36 @@ const Settings = () => {
                         {editingItem ? "Update the document type." : "Enter a name for the new document type."}
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                      <FormItem>
-                        <FormLabel>Document Type</FormLabel>
-                        <FormControl>
-                          <Input 
-                            value={newItemName} 
-                            onChange={(e) => setNewItemName(e.target.value)} 
-                            placeholder="e.g., Exam" 
+                    <Form {...dialogForm}>
+                      <form onSubmit={dialogForm.handleSubmit(editingItem ? handleUpdateItem : handleAddItem)}>
+                        <div className="py-4">
+                          <FormField
+                            control={dialogForm.control}
+                            name="itemName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Document Type</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field}
+                                    placeholder="e.g., Exam" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                      </FormItem>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={editingItem ? handleUpdateItem : handleAddItem}>
-                        {editingItem ? "Update" : "Add"}
-                      </Button>
-                    </DialogFooter>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">
+                            {editingItem ? "Update" : "Add"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
               </div>
