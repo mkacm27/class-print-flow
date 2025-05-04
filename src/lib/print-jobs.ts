@@ -2,7 +2,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import { PrintJob } from './types';
 import { initializeData } from './defaults';
-import { getClasses, updateClassUnpaidBalance } from './classes';
+import { getClasses, updateClassUnpaidBalance, getClassById } from './classes';
+import { getSettings } from './settings';
+import { savePDFToLocalFolder } from '@/utils/pdf-utils';
+import { toast } from '@/hooks/use-toast';
 
 // Generate a serial number for a print job
 export const generateSerialNumber = (): string => {
@@ -32,6 +35,46 @@ export const getPrintJobs = (): PrintJob[] => {
   return JSON.parse(localStorage.getItem('printjobs') || '[]');
 };
 
+// Send WhatsApp notification
+export const sendWhatsAppNotification = (printJob: PrintJob, pdfPath?: string): void => {
+  const settings = getSettings();
+  if (!settings.enableWhatsappNotification) return;
+  
+  try {
+    // Get class to retrieve WhatsApp contact
+    const classes = getClasses();
+    const classObj = classes.find(c => c.name === printJob.className);
+    
+    if (!classObj || !classObj.whatsappContact) {
+      console.log("No WhatsApp contact found for this class");
+      return;
+    }
+    
+    // Format phone number (remove any non-digit characters)
+    const phoneNumber = classObj.whatsappContact.replace(/\D/g, '');
+    
+    // Create the WhatsApp message using the template
+    let message = settings.whatsappTemplate
+      .replace("{{serialNumber}}", printJob.serialNumber)
+      .replace("{{className}}", printJob.className)
+      .replace("{{totalPrice}}", `$${printJob.totalPrice.toFixed(2)}`);
+      
+    // Add reminder for unpaid receipts
+    if (!printJob.paid) {
+      message += "\n\nPlease arrange payment as soon as possible. Thank you!";
+    }
+    
+    // Encode the message for the URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Open WhatsApp with the message
+    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, "_blank");
+    
+  } catch (error) {
+    console.error("Failed to send WhatsApp notification:", error);
+  }
+};
+
 export const addPrintJob = (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'>): PrintJob => {
   const jobs = getPrintJobs();
   const newJob: PrintJob = {
@@ -46,6 +89,37 @@ export const addPrintJob = (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timesta
   // Update class unpaid balance
   if (!job.paid) {
     updateClassUnpaidBalance(job.className, job.totalPrice);
+  }
+  
+  const settings = getSettings();
+  
+  // Handle automatic PDF generation and saving
+  if (settings.enableAutoPdfSave) {
+    try {
+      // This will need to run in an Electron environment to work
+      savePDFToLocalFolder(newJob)
+        .then(filePath => {
+          if (filePath) {
+            toast({
+              title: "PDF Receipt Saved",
+              description: `Saved to ${filePath}`,
+            });
+            
+            // After saving PDF, send WhatsApp notification if enabled
+            if (settings.enableWhatsappNotification) {
+              sendWhatsAppNotification(newJob, filePath);
+            }
+          }
+        })
+        .catch(error => {
+          console.error("Error saving PDF:", error);
+        });
+    } catch (error) {
+      console.error("Failed to generate/save PDF:", error);
+    }
+  } else if (settings.enableWhatsappNotification) {
+    // If PDF saving is not enabled but WhatsApp is, send notification
+    sendWhatsAppNotification(newJob);
   }
   
   return newJob;
@@ -64,6 +138,13 @@ export const updatePrintJob = (job: PrintJob): void => {
         : job.totalPrice;  // Job was marked as unpaid, increase unpaid balance
       
       updateClassUnpaidBalance(job.className, priceDifference);
+      
+      // If job was marked as paid and WhatsApp notifications are enabled,
+      // send a payment confirmation
+      const settings = getSettings();
+      if (job.paid && settings.enableWhatsappNotification) {
+        sendWhatsAppNotification(job);
+      }
     }
     
     jobs[index] = job;

@@ -3,14 +3,14 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Phone } from "lucide-react";
 import { Class } from "@/lib/types";
-import { ItemFormDialog } from "./ItemFormDialog";
+import { ClassFormDialog } from "./ClassFormDialog";
 
 interface ClassesTabProps {
   classes: Class[];
-  onAddClass: (name: string) => void;
-  onUpdateClass: (id: string, name: string) => void;
+  onAddClass: (name: string, whatsappContact?: string) => void;
+  onUpdateClass: (id: string, name: string, whatsappContact?: string) => void;
   onDeleteClass: (id: string) => void;
 }
 
@@ -21,22 +21,29 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
   onDeleteClass,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [editingItem, setEditingItem] = React.useState<{ id: string; name: string } | null>(null);
+  const [editingClass, setEditingClass] = React.useState<Class | null>(null);
 
-  const handleSubmit = (data: { itemName: string }) => {
-    if (editingItem) {
-      onUpdateClass(editingItem.id, data.itemName);
+  const handleSubmit = (data: { name: string; whatsappContact?: string }) => {
+    if (editingClass) {
+      onUpdateClass(editingClass.id, data.name, data.whatsappContact);
     } else {
-      onAddClass(data.itemName);
+      onAddClass(data.name, data.whatsappContact);
     }
     setIsDialogOpen(false);
-    setEditingItem(null);
+    setEditingClass(null);
   };
 
   const columns = [
     {
       header: "Class Name",
       accessorKey: "name" as const,
+      searchable: true,
+      sortable: true,
+    },
+    {
+      header: "WhatsApp Contact",
+      accessorKey: "whatsappContact" as const,
+      cell: (row: Class) => row.whatsappContact || "Not set",
       searchable: true,
       sortable: true,
     },
@@ -56,7 +63,7 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              setEditingItem({ id: row.id, name: row.name });
+              setEditingClass(row);
               setIsDialogOpen(true);
             }}
           >
@@ -69,7 +76,6 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
               e.stopPropagation();
               onDeleteClass(row.id);
             }}
-            disabled={row.totalUnpaid > 0}
           >
             <Trash2 className="w-4 h-4 text-destructive" />
           </Button>
@@ -84,11 +90,11 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl">Classes</CardTitle>
-            <CardDescription>Manage your classes</CardDescription>
+            <CardDescription>Manage your classes and unpaid balances</CardDescription>
           </div>
           <Button 
             onClick={() => {
-              setEditingItem(null);
+              setEditingClass(null);
               setIsDialogOpen(true);
             }}
             className="gap-2"
@@ -102,15 +108,17 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
         <DataTable data={classes} columns={columns} />
       </CardContent>
       
-      <ItemFormDialog 
+      <ClassFormDialog 
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onSubmit={handleSubmit}
-        title={editingItem ? "Edit Class" : "Add New Class"}
-        description={editingItem ? "Update the class name." : "Enter a name for the new class."}
-        placeholder="e.g., Biology 101"
-        isEditing={!!editingItem}
-        initialValue={editingItem?.name || ""}
+        title={editingClass ? "Edit Class" : "Add New Class"}
+        description={editingClass ? "Update the class details." : "Enter details for the new class."}
+        isEditing={!!editingClass}
+        initialValues={{
+          name: editingClass?.name || "",
+          whatsappContact: editingClass?.whatsappContact || "",
+        }}
       />
     </Card>
   );

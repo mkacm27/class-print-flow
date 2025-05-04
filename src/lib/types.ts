@@ -19,6 +19,7 @@ export interface Class {
   id: string;
   name: string;
   totalUnpaid: number;
+  whatsappContact?: string; // Added WhatsApp contact field
 }
 
 export interface Teacher {
@@ -39,4 +40,7 @@ export interface Settings {
   priceBoth: number;
   maxUnpaidThreshold: number;
   whatsappTemplate: string;
+  defaultSavePath: string; // Added default save path for PDFs
+  enableAutoPdfSave: boolean; // Toggle for auto PDF save
+  enableWhatsappNotification: boolean; // Toggle for auto WhatsApp notification
 }
