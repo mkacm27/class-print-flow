@@ -36,20 +36,20 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
   const columns = [
     {
       header: "Class Name",
-      accessorKey: "name",
+      accessorKey: "name" as const,
       searchable: true,
       sortable: true,
     },
     {
       header: "Unpaid Balance",
-      accessorKey: "totalUnpaid",
-      cell: (row: { totalUnpaid: number }) => `$${row.totalUnpaid.toFixed(2)}`,
+      accessorKey: "totalUnpaid" as const,
+      cell: (row: Class) => `$${row.totalUnpaid.toFixed(2)}`,
       sortable: true,
     },
     {
       header: "Actions",
-      accessorKey: "id",
-      cell: (row: { id: string; name: string; totalUnpaid: number }) => (
+      accessorKey: "id" as const,
+      cell: (row: Class) => (
         <div className="flex gap-2">
           <Button 
             variant="ghost" 

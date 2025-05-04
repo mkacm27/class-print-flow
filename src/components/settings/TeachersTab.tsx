@@ -36,14 +36,14 @@ export const TeachersTab: React.FC<TeachersTabProps> = ({
   const columns = [
     {
       header: "Teacher Name",
-      accessorKey: "name",
+      accessorKey: "name" as const,
       searchable: true,
       sortable: true,
     },
     {
       header: "Actions",
-      accessorKey: "id",
-      cell: (row: { id: string; name: string }) => (
+      accessorKey: "id" as const,
+      cell: (row: Teacher) => (
         <div className="flex gap-2">
           <Button 
             variant="ghost" 
