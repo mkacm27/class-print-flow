@@ -6,20 +6,20 @@ import { getDocumentTypes } from './document-types';
 import { getSettings } from './settings';
 
 // Backup and restore
-export const backupData = (): object => {
+export const backupData = async (): Promise<object> => {
   const data = {
-    printjobs: getPrintJobs(),
-    classes: getClasses(),
-    teachers: getTeachers(),
-    documenttypes: getDocumentTypes(),
-    settings: getSettings(),
+    printjobs: await getPrintJobs(),
+    classes: await getClasses(),
+    teachers: await getTeachers(),
+    documenttypes: await getDocumentTypes(),
+    settings: await getSettings(),
   };
   return data;
 };
 
 // Export function renamed to match imports in Settings.tsx
-export const exportData = (): string => {
-  return JSON.stringify(backupData());
+export const exportData = async (): Promise<string> => {
+  return JSON.stringify(await backupData());
 };
 
 export const restoreData = (data: object): boolean => {

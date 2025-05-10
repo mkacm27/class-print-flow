@@ -24,45 +24,55 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const jobs = getPrintJobs();
-    setPrintJobs(jobs);
-    
-    const classesData = getClasses();
-    setClasses(classesData);
-    
-    // Calculate today's jobs
-    const today = new Date();
-    const todaysJobs = jobs.filter(job => {
-      const jobDate = new Date(job.timestamp);
-      return (
-        jobDate.getDate() === today.getDate() &&
-        jobDate.getMonth() === today.getMonth() &&
-        jobDate.getFullYear() === today.getFullYear()
-      );
-    });
-    setTodayJobs(todaysJobs.length);
-    
-    // Calculate total pages
-    const totalPageCount = jobs.reduce((acc, job) => acc + job.pages * job.copies, 0);
-    setTotalPages(totalPageCount);
-    
-    // Calculate total unpaid
-    const unpaidAmount = jobs
-      .filter(job => !job.paid)
-      .reduce((acc, job) => acc + job.totalPrice, 0);
-    setTotalUnpaid(unpaidAmount);
-    
-    // Recent jobs (last 5)
-    const recent = [...jobs]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 5);
-    setRecentJobs(recent);
+    const fetchData = async () => {
+      try {
+        const jobs = await getPrintJobs();
+        setPrintJobs(jobs);
+        
+        const classesData = await getClasses();
+        setClasses(classesData);
+        
+        // Calculate today's jobs
+        const today = new Date();
+        const todaysJobs = jobs.filter(job => {
+          const jobDate = new Date(job.timestamp);
+          return (
+            jobDate.getDate() === today.getDate() &&
+            jobDate.getMonth() === today.getMonth() &&
+            jobDate.getFullYear() === today.getFullYear()
+          );
+        });
+        setTodayJobs(todaysJobs.length);
+        
+        // Calculate total pages
+        const totalPageCount = jobs.reduce((acc, job) => acc + job.pages * job.copies, 0);
+        setTotalPages(totalPageCount);
+        
+        // Calculate total unpaid
+        const unpaidAmount = jobs
+          .filter(job => !job.paid)
+          .reduce((acc, job) => acc + job.totalPrice, 0);
+        setTotalUnpaid(unpaidAmount);
+        
+        // Recent jobs (last 5)
+        const recent = [...jobs]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 5);
+        setRecentJobs(recent);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Calculate classes with high unpaid balance
-  const classesWithHighBalance = classes
-    .filter(c => c.totalUnpaid > 0)
-    .sort((a, b) => b.totalUnpaid - a.totalUnpaid);
+  const classesWithHighBalance = classes && classes.length > 0 
+    ? classes
+        .filter(c => c.totalUnpaid > 0)
+        .sort((a, b) => b.totalUnpaid - a.totalUnpaid)
+    : [];
 
   return (
     <div className="space-y-6">

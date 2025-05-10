@@ -8,14 +8,14 @@ import { savePDFToLocalFolder } from '@/utils/pdf-utils';
 import { toast } from '@/hooks/use-toast';
 
 // Generate a serial number for a print job
-export const generateSerialNumber = (): string => {
+export const generateSerialNumber = async (): Promise<string> => {
   const date = new Date();
   const year = date.getFullYear().toString().slice(-2);
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
   
   // Get the count of jobs from today
-  const jobs = getPrintJobs();
+  const jobs = await getPrintJobs();
   const todayJobs = jobs.filter(job => {
     const jobDate = new Date(job.timestamp);
     return (
@@ -30,19 +30,19 @@ export const generateSerialNumber = (): string => {
 };
 
 // Print Jobs CRUD
-export const getPrintJobs = (): PrintJob[] => {
-  initializeData();
+export const getPrintJobs = async (): Promise<PrintJob[]> => {
+  await initializeData();
   return JSON.parse(localStorage.getItem('printjobs') || '[]');
 };
 
 // Send WhatsApp notification
-export const sendWhatsAppNotification = (printJob: PrintJob, pdfPath?: string): void => {
-  const settings = getSettings();
+export const sendWhatsAppNotification = async (printJob: PrintJob, pdfPath?: string): Promise<void> => {
+  const settings = await getSettings();
   if (!settings.enableWhatsappNotification) return;
   
   try {
     // Get class to retrieve WhatsApp contact
-    const classes = getClasses();
+    const classes = await getClasses();
     const classObj = classes.find(c => c.name === printJob.className);
     
     if (!classObj || !classObj.whatsappContact) {
@@ -75,12 +75,12 @@ export const sendWhatsAppNotification = (printJob: PrintJob, pdfPath?: string): 
   }
 };
 
-export const addPrintJob = (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'>): PrintJob => {
-  const jobs = getPrintJobs();
+export const addPrintJob = async (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'>): Promise<PrintJob> => {
+  const jobs = await getPrintJobs();
   const newJob: PrintJob = {
     ...job,
     id: uuidv4(),
-    serialNumber: generateSerialNumber(),
+    serialNumber: await generateSerialNumber(),
     timestamp: new Date().toISOString(),
   };
   jobs.push(newJob);
@@ -88,10 +88,10 @@ export const addPrintJob = (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timesta
   
   // Update class unpaid balance
   if (!job.paid) {
-    updateClassUnpaidBalance(job.className, job.totalPrice);
+    await updateClassUnpaidBalance(job.className, job.totalPrice);
   }
   
-  const settings = getSettings();
+  const settings = await getSettings();
   
   // Handle automatic PDF generation and saving
   if (settings.enableAutoPdfSave) {
@@ -125,8 +125,8 @@ export const addPrintJob = (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timesta
   return newJob;
 };
 
-export const updatePrintJob = (job: PrintJob): void => {
-  const jobs = getPrintJobs();
+export const updatePrintJob = async (job: PrintJob): Promise<void> => {
+  const jobs = await getPrintJobs();
   const index = jobs.findIndex(j => j.id === job.id);
   if (index !== -1) {
     // Check if payment status changed
@@ -137,13 +137,13 @@ export const updatePrintJob = (job: PrintJob): void => {
         ? -job.totalPrice  // Job was marked as paid, decrease unpaid balance
         : job.totalPrice;  // Job was marked as unpaid, increase unpaid balance
       
-      updateClassUnpaidBalance(job.className, priceDifference);
+      await updateClassUnpaidBalance(job.className, priceDifference);
       
       // If job was marked as paid and WhatsApp notifications are enabled,
       // send a payment confirmation
-      const settings = getSettings();
+      const settings = await getSettings();
       if (job.paid && settings.enableWhatsappNotification) {
-        sendWhatsAppNotification(job);
+        await sendWhatsAppNotification(job);
       }
     }
     
@@ -152,12 +152,12 @@ export const updatePrintJob = (job: PrintJob): void => {
   }
 };
 
-export const deletePrintJob = (id: string): void => {
-  const jobs = getPrintJobs();
+export const deletePrintJob = async (id: string): Promise<void> => {
+  const jobs = await getPrintJobs();
   const jobToDelete = jobs.find(j => j.id === id);
   if (jobToDelete && !jobToDelete.paid) {
     // Update class unpaid balance
-    updateClassUnpaidBalance(jobToDelete.className, -jobToDelete.totalPrice);
+    await updateClassUnpaidBalance(jobToDelete.className, -jobToDelete.totalPrice);
   }
   
   const filteredJobs = jobs.filter(j => j.id !== id);

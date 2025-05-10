@@ -4,18 +4,18 @@ import { Class } from './types';
 import { initializeData } from './defaults';
 
 // Classes CRUD
-export const getClasses = (): Class[] => {
-  initializeData();
+export const getClasses = async (): Promise<Class[]> => {
+  await initializeData();
   return JSON.parse(localStorage.getItem('classes') || '[]');
 };
 
-export const getClassById = (id: string): Class | undefined => {
-  const classes = getClasses();
+export const getClassById = async (id: string): Promise<Class | undefined> => {
+  const classes = await getClasses();
   return classes.find(c => c.id === id);
 };
 
-export const addClass = (name: string, whatsappContact?: string): Class => {
-  const classes = getClasses();
+export const addClass = async (name: string, whatsappContact?: string): Promise<Class> => {
+  const classes = await getClasses();
   const newClass: Class = {
     id: uuidv4(),
     name,
@@ -27,8 +27,8 @@ export const addClass = (name: string, whatsappContact?: string): Class => {
   return newClass;
 };
 
-export const updateClass = (id: string, name: string, whatsappContact?: string): void => {
-  const classes = getClasses();
+export const updateClass = async (id: string, name: string, whatsappContact?: string): Promise<void> => {
+  const classes = await getClasses();
   const index = classes.findIndex(c => c.id === id);
   if (index !== -1) {
     // Preserve totalUnpaid value
@@ -43,15 +43,15 @@ export const updateClass = (id: string, name: string, whatsappContact?: string):
   }
 };
 
-export const deleteClass = (id: string): void => {
-  const classes = getClasses();
+export const deleteClass = async (id: string): Promise<void> => {
+  const classes = await getClasses();
   const filteredClasses = classes.filter(c => c.id !== id);
   localStorage.setItem('classes', JSON.stringify(filteredClasses));
 };
 
 // Helper function to update the unpaid balance of a class
-export const updateClassUnpaidBalance = (className: string, amount: number): void => {
-  const classes = getClasses();
+export const updateClassUnpaidBalance = async (className: string, amount: number): Promise<void> => {
+  const classes = await getClasses();
   const classIndex = classes.findIndex(c => c.name === className);
   
   if (classIndex !== -1) {
