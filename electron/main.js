@@ -53,14 +53,13 @@ app.on('activate', function () {
 });
 
 // File system operations
-ipcMain.handle('saveFile', async (event, filePath, dataBase64) => {
+ipcMain.handle('saveFile', async (event, filePath, data) => {
   try {
     const dirPath = path.dirname(filePath);
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
     
-    const data = Buffer.from(dataBase64, 'base64');
     fs.writeFileSync(filePath, data);
     return true;
   } catch (error) {

@@ -21,6 +21,5 @@
     "category": "Utility"
   },
   "npmRebuild": false,
-  "buildDependenciesFromSource": true,
-  "electronVersion": "28.1.0"
+  "buildDependenciesFromSource": false
 }

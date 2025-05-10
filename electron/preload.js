@@ -6,30 +6,22 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // File system operations
   saveFile: async (filePath, data) => {
-    // Convert ArrayBuffer to Base64 for IPC transfer
-    const buffer = new Uint8Array(data);
-    let binary = '';
-    for (let i = 0; i < buffer.byteLength; i++) {
-      binary += String.fromCharCode(buffer[i]);
+    // Convert ArrayBuffer to Buffer for IPC transfer
+    try {
+      const buffer = Buffer.from(data);
+      return await ipcRenderer.invoke('saveFile', filePath, buffer);
+    } catch (error) {
+      console.error('Error in saveFile:', error);
+      return false;
     }
-    const base64Data = btoa(binary);
-    
-    return await ipcRenderer.invoke('saveFile', filePath, base64Data);
   },
   ensureDirectoryExists: async (dirPath) => {
-    return await ipcRenderer.invoke('ensureDirectoryExists', dirPath);
-  },
-  isElectron: () => true,
-  // Local storage bridge
-  store: {
-    get: (key) => {
-      return localStorage.getItem(key);
-    },
-    set: (key, value) => {
-      localStorage.setItem(key, value);
-    },
-    remove: (key) => {
-      localStorage.removeItem(key);
+    try {
+      return await ipcRenderer.invoke('ensureDirectoryExists', dirPath);
+    } catch (error) {
+      console.error('Error in ensureDirectoryExists:', error);
+      return false;
     }
-  }
+  },
+  isElectron: () => true
 });
