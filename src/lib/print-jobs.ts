@@ -70,8 +70,11 @@ const generateDetailedReceiptMessage = (printJob: PrintJob, settings: any): stri
   
   message += `*Payment Status:* ${printJob.paid ? "PAID" : "UNPAID"}\n`;
   
-  // Add payment reminder for unpaid receipts
-  if (!printJob.paid) {
+  // Add payment confirmation message for paid receipts
+  if (printJob.paid) {
+    message += `\n*CONFIRMATION:* Payment received. Thank you!`;
+  } else {
+    // Add payment reminder for unpaid receipts
     message += `\n*REMINDER:* Please arrange payment as soon as possible. Thank you!`;
   }
   
@@ -140,6 +143,25 @@ export const addPrintJob = async (job: Omit<PrintJob, 'id' | 'serialNumber' | 't
   return newJob;
 };
 
+// Check if a receipt with the same details already exists to prevent duplicates
+export const checkDuplicateReceipt = async (job: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'>): Promise<boolean> => {
+  const jobs = await getPrintJobs();
+  const currentTime = new Date();
+  const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000);
+  
+  // Check for similar receipts in the last 5 minutes
+  return jobs.some(existingJob => {
+    const jobTime = new Date(existingJob.timestamp);
+    return (
+      jobTime >= fiveMinutesAgo &&
+      existingJob.className === job.className &&
+      existingJob.pages === job.pages &&
+      existingJob.copies === job.copies &&
+      existingJob.printType === job.printType
+    );
+  });
+};
+
 export const updatePrintJob = async (job: PrintJob): Promise<void> => {
   const jobs = await getPrintJobs();
   const index = jobs.findIndex(j => j.id === job.id);
@@ -154,10 +176,10 @@ export const updatePrintJob = async (job: PrintJob): Promise<void> => {
       
       await updateClassUnpaidBalance(job.className, priceDifference);
       
-      // If job was marked as paid and WhatsApp notifications are enabled,
+      // If job was marked as paid and automatic paid notifications are enabled,
       // send a payment confirmation
       const settings = await getSettings();
-      if (job.paid && settings.enableWhatsappNotification) {
+      if (job.paid && settings.enableAutoPaidNotification && settings.enableWhatsappNotification) {
         await sendWhatsAppNotification(job);
       }
     }

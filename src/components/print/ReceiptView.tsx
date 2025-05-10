@@ -12,17 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { 
   getPrintJobs, 
-  PrintJob, 
-  getSettings,
   updatePrintJob,
-  sendWhatsAppNotification 
+  sendWhatsAppNotification,
+  PrintJob,
+  getSettings
 } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Check, ArrowLeft, FileText, Printer, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { generatePDFReceipt, savePDFToLocalFolder } from "@/utils/pdf-utils";
-import { getClasses } from "@/lib/db";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +30,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ReceiptView = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,9 +48,12 @@ const ReceiptView = () => {
     shopName: "",
     contactInfo: "",
     whatsappTemplate: "",
+    enableAutoPaidNotification: false,
+    enableWhatsappNotification: false
   });
   const [loading, setLoading] = useState(true);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isPaidConfirmOpen, setIsPaidConfirmOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -166,21 +178,49 @@ const ReceiptView = () => {
     };
   };
   
-  const handleTogglePaid = () => {
+  const openPaidConfirmation = () => {
+    if (!printJob || printJob.paid) return;
+    setIsPaidConfirmOpen(true);
+  };
+
+  const handleTogglePaid = async () => {
     if (!printJob) return;
+    
+    // If already paid, we can simply toggle back to unpaid without confirmation
+    if (printJob.paid) {
+      const updatedJob = {
+        ...printJob,
+        paid: false,
+      };
+      
+      await updatePrintJob(updatedJob);
+      setPrintJob(updatedJob);
+      
+      toast({
+        title: "Marked as Unpaid",
+        description: `Receipt ${printJob.serialNumber} has been updated.`,
+      });
+      return;
+    }
+    
+    // If marking as paid (requires confirmation), close dialog first
+    setIsPaidConfirmOpen(false);
     
     const updatedJob = {
       ...printJob,
-      paid: !printJob.paid,
+      paid: true,
     };
     
-    updatePrintJob(updatedJob);
+    await updatePrintJob(updatedJob);
     setPrintJob(updatedJob);
     
     toast({
-      title: updatedJob.paid ? "Marked as Paid" : "Marked as Unpaid",
+      title: "Marked as Paid",
       description: `Receipt ${printJob.serialNumber} has been updated.`,
     });
+    
+    // If auto notifications are enabled, we don't need another toast
+    // as the update function will handle sending the WhatsApp notification
   };
   
   if (loading) {
@@ -295,7 +335,11 @@ const ReceiptView = () => {
         </CardContent>
         
         <CardFooter className="flex flex-col sm:flex-row gap-2 pt-6 border-t print:hidden">
-          <Button onClick={handleTogglePaid} variant="outline" className="w-full sm:w-auto gap-2">
+          <Button 
+            onClick={printJob.paid ? handleTogglePaid : openPaidConfirmation} 
+            variant="outline" 
+            className="w-full sm:w-auto gap-2"
+          >
             <Check className="w-4 h-4" />
             Mark as {printJob.paid ? "Unpaid" : "Paid"}
           </Button>
@@ -401,6 +445,27 @@ const ReceiptView = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Confirmation Dialog */}
+      <AlertDialog open={isPaidConfirmOpen} onOpenChange={setIsPaidConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark Receipt as Paid?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will mark receipt #{printJob.serialNumber} as paid.
+              {settings.enableAutoPaidNotification && settings.enableWhatsappNotification && (
+                <span className="block mt-2 font-medium">
+                  A payment confirmation will be automatically sent via WhatsApp.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleTogglePaid}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

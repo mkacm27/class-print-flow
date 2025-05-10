@@ -42,4 +42,5 @@ export interface Settings {
   defaultSavePath: string; // Added default save path for PDFs
   enableAutoPdfSave: boolean; // Toggle for auto PDF save
   enableWhatsappNotification: boolean; // Toggle for auto WhatsApp notification
+  enableAutoPaidNotification: boolean; // Toggle for auto notification when marking as paid
 }

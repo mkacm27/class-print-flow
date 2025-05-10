@@ -1,66 +1,62 @@
 
-import { Settings, Class, Teacher, DocumentType } from './types';
+import { v4 as uuidv4 } from "uuid";
+import { Settings, Class, Teacher, DocumentType } from "./types";
 
-// Default settings for the application
+// Default settings
 export const defaultSettings: Settings = {
-  shopName: "Print Shop",
-  contactInfo: "123 Main St, City | info@printshop.com | (555) 123-4567",
+  shopName: "Print Enterprise",
+  contactInfo: "+212 600000000 • example@print.com",
   priceRecto: 0.10,
   priceRectoVerso: 0.15,
   priceBoth: 0.25,
-  maxUnpaidThreshold: 50,
-  whatsappTemplate: "Hello! Your print job receipt {{serialNumber}} for {{className}} is ready. Total amount: {{totalPrice}}.",
+  maxUnpaidThreshold: 100,
+  whatsappTemplate: "Thank you for using our printing service!",
   defaultSavePath: "C:/PrintReceipts",
   enableAutoPdfSave: true,
-  enableWhatsappNotification: true
+  enableWhatsappNotification: true,
+  enableAutoPaidNotification: false,
 };
 
-// Default classes
+// Sample data for classes
 export const defaultClasses: Class[] = [
-  { id: "class1", name: "Class 10-A", totalUnpaid: 0, whatsappContact: "" },
-  { id: "class2", name: "Class 11-B", totalUnpaid: 0, whatsappContact: "" },
-  { id: "class3", name: "Class 12-C", totalUnpaid: 0, whatsappContact: "" }
+  { id: uuidv4(), name: "Class 1-A", totalUnpaid: 0 },
+  { id: uuidv4(), name: "Class 2-B", totalUnpaid: 0 },
+  { id: uuidv4(), name: "Class 3-C", totalUnpaid: 0 },
 ];
 
-// Default teachers
+// Sample data for teachers
 export const defaultTeachers: Teacher[] = [
-  { id: "teacher1", name: "Professor Smith" },
-  { id: "teacher2", name: "Dr. Johnson" },
-  { id: "teacher3", name: "Ms. Williams" }
+  { id: uuidv4(), name: "Sarah Johnson" },
+  { id: uuidv4(), name: "Michael Smith" },
+  { id: uuidv4(), name: "Emma Davis" },
 ];
 
-// Default document types
+// Sample data for document types
 export const defaultDocumentTypes: DocumentType[] = [
-  { id: "doc1", name: "Exam" },
-  { id: "doc2", name: "Assignment" },
-  { id: "doc3", name: "Worksheet" },
-  { id: "doc4", name: "Notes" }
+  { id: uuidv4(), name: "Exam" },
+  { id: uuidv4(), name: "Worksheet" },
+  { id: uuidv4(), name: "Handout" },
 ];
 
-// Initialize data in localStorage if not present
-export const initializeData = (): void => {
-  // Initialize settings
-  if (!localStorage.getItem('settings')) {
-    localStorage.setItem('settings', JSON.stringify(defaultSettings));
+// Initialize local storage with default values if they don't exist
+export const initializeData = async (): Promise<void> => {
+  if (localStorage.getItem("settings") === null) {
+    localStorage.setItem("settings", JSON.stringify(defaultSettings));
   }
 
-  // Initialize classes
-  if (!localStorage.getItem('classes')) {
-    localStorage.setItem('classes', JSON.stringify(defaultClasses));
+  if (localStorage.getItem("classes") === null) {
+    localStorage.setItem("classes", JSON.stringify(defaultClasses));
   }
 
-  // Initialize teachers
-  if (!localStorage.getItem('teachers')) {
-    localStorage.setItem('teachers', JSON.stringify(defaultTeachers));
+  if (localStorage.getItem("teachers") === null) {
+    localStorage.setItem("teachers", JSON.stringify(defaultTeachers));
   }
 
-  // Initialize document types
-  if (!localStorage.getItem('documenttypes')) {
-    localStorage.setItem('documenttypes', JSON.stringify(defaultDocumentTypes));
+  if (localStorage.getItem("documenttypes") === null) {
+    localStorage.setItem("documenttypes", JSON.stringify(defaultDocumentTypes));
   }
 
-  // Initialize print jobs
-  if (!localStorage.getItem('printjobs')) {
-    localStorage.setItem('printjobs', JSON.stringify([]));
+  if (localStorage.getItem("printjobs") === null) {
+    localStorage.setItem("printjobs", JSON.stringify([]));
   }
 };
