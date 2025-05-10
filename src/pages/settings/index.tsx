@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettingsTab } from "@/components/settings/GeneralSettingsTab";
 import { ClassesTab } from "@/components/settings/ClassesTab";
 import { TeachersTab } from "@/components/settings/TeachersTab";
 import { DocumentTypesTab } from "@/components/settings/DocumentTypesTab";
-import { getSettings, updateSettings } from "@/lib/db";
+import { getSettings, updateSettings } from "@/lib/settings";
 import { getClasses, addClass, updateClass, deleteClass } from "@/lib/classes";
 import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from "@/lib/teachers";
 import { getDocumentTypes, addDocumentType, updateDocumentType, deleteDocumentType } from "@/lib/document-types";
@@ -35,38 +34,56 @@ const Settings = () => {
   
   useEffect(() => {
     const loadData = async () => {
-      // Load settings on component mount
-      const loadedSettings = await getSettings();
-      setSettings(loadedSettings);
-      
-      // Load data for other tabs
-      const classesData = await getClasses();
-      setClasses(classesData);
-      
-      const teachersData = await getTeachers();
-      setTeachers(teachersData);
-      
-      const docTypesData = await getDocumentTypes();
-      setDocumentTypes(docTypesData);
+      try {
+        // Load settings on component mount
+        const loadedSettings = await getSettings();
+        setSettings(loadedSettings);
+        
+        // Load data for other tabs
+        const classesData = await getClasses();
+        setClasses(classesData);
+        
+        const teachersData = await getTeachers();
+        setTeachers(teachersData);
+        
+        const docTypesData = await getDocumentTypes();
+        setDocumentTypes(docTypesData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast({
+          title: "Error loading settings",
+          description: "Failed to load settings data.",
+          variant: "destructive",
+        });
+      }
     };
     
     loadData();
-  }, []);
+  }, [toast]);
 
   const handleUpdateSettings = async (updatedSettings: SettingsType) => {
-    await updateSettings(updatedSettings);
-    setSettings(updatedSettings);
-    
-    toast({
-      title: "Settings updated",
-      description: "Your settings have been saved successfully.",
-      variant: "default",
-    });
+    try {
+      await updateSettings(updatedSettings);
+      setSettings(updatedSettings);
+      
+      toast({
+        title: "Settings updated",
+        description: "Your settings have been saved successfully.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Failed to save your settings.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Class handlers
-  const handleAddClass = async (name: string, whatsappContact?: string) => {
-    const newClass = await addClass(name, whatsappContact);
+  const handleAddClass = async (name: string) => {
+    const newClass = await addClass(name);
     const updatedClasses = await getClasses();
     setClasses(updatedClasses);
     
@@ -77,8 +94,8 @@ const Settings = () => {
     });
   };
 
-  const handleUpdateClass = async (id: string, name: string, whatsappContact?: string) => {
-    await updateClass(id, name, whatsappContact);
+  const handleUpdateClass = async (id: string, name: string) => {
+    await updateClass(id, name);
     const updatedClasses = await getClasses();
     setClasses(updatedClasses);
     

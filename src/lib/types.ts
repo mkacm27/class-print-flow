@@ -19,7 +19,6 @@ export interface Class {
   id: string;
   name: string;
   totalUnpaid: number;
-  whatsappContact?: string; // Added WhatsApp contact field
 }
 
 export interface Teacher {

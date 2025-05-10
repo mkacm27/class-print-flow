@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { PrintJob } from './types';
 import { initializeData } from './defaults';
-import { getClasses, updateClassUnpaidBalance, getClassById } from './classes';
+import { getClasses, updateClassUnpaidBalance } from './classes';
 import { getSettings } from './settings';
 import { savePDFToLocalFolder } from '@/utils/pdf-utils';
 import { toast } from '@/hooks/use-toast';
@@ -36,23 +36,11 @@ export const getPrintJobs = async (): Promise<PrintJob[]> => {
 };
 
 // Send WhatsApp notification
-export const sendWhatsAppNotification = async (printJob: PrintJob, pdfPath?: string): Promise<void> => {
+export const sendWhatsAppNotification = async (printJob: PrintJob): Promise<void> => {
   const settings = await getSettings();
   if (!settings.enableWhatsappNotification) return;
   
   try {
-    // Get class to retrieve WhatsApp contact
-    const classes = await getClasses();
-    const classObj = classes.find(c => c.name === printJob.className);
-    
-    if (!classObj || !classObj.whatsappContact) {
-      console.log("No WhatsApp contact found for this class");
-      return;
-    }
-    
-    // Format phone number (remove any non-digit characters)
-    const phoneNumber = classObj.whatsappContact.replace(/\D/g, '');
-    
     // Create the WhatsApp message using the template
     let message = settings.whatsappTemplate
       .replace("{{serialNumber}}", printJob.serialNumber)
@@ -67,8 +55,8 @@ export const sendWhatsAppNotification = async (printJob: PrintJob, pdfPath?: str
     // Encode the message for the URL
     const encodedMessage = encodeURIComponent(message);
     
-    // Open WhatsApp with the message
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, "_blank");
+    // Open WhatsApp Web with the message (without phone number)
+    window.open(`https://web.whatsapp.com/send?text=${encodedMessage}`, "_blank");
     
   } catch (error) {
     console.error("Failed to send WhatsApp notification:", error);
@@ -107,7 +95,7 @@ export const addPrintJob = async (job: Omit<PrintJob, 'id' | 'serialNumber' | 't
             
             // After saving PDF, send WhatsApp notification if enabled
             if (settings.enableWhatsappNotification) {
-              sendWhatsAppNotification(newJob, filePath);
+              sendWhatsAppNotification(newJob);
             }
           }
         })

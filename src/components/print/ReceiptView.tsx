@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -54,16 +53,25 @@ const ReceiptView = () => {
     loadData();
   }, [id]);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!printJob) return;
     
-    // Use the sendWhatsAppNotification function from lib/db.ts
-    sendWhatsAppNotification(printJob);
-    
-    toast({
-      title: "WhatsApp Sharing",
-      description: "WhatsApp web has been opened with your receipt details.",
-    });
+    try {
+      // Use the sendWhatsAppNotification function from lib/print-jobs.ts
+      await sendWhatsAppNotification(printJob);
+      
+      toast({
+        title: "WhatsApp Web Opened",
+        description: "WhatsApp web has been opened with your receipt details.",
+      });
+    } catch (error) {
+      console.error("Error opening WhatsApp:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp web.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSavePDF = async () => {

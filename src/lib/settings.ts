@@ -6,7 +6,8 @@ import { defaultSettings } from './defaults';
 // Settings
 export const getSettings = async (): Promise<Settings> => {
   await initializeData();
-  return JSON.parse(localStorage.getItem('settings') || JSON.stringify(defaultSettings));
+  const settingsStr = localStorage.getItem('settings');
+  return settingsStr ? JSON.parse(settingsStr) : defaultSettings;
 };
 
 export const updateSettings = async (settings: Settings): Promise<void> => {

@@ -61,9 +61,9 @@ export const AutomationSettingsSection: React.FC<AutomationSettingsSectionProps>
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                 <div className="space-y-0.5">
-                  <FormLabel>Enable WhatsApp Notifications</FormLabel>
+                  <FormLabel>Enable WhatsApp Web Sharing</FormLabel>
                   <FormDescription>
-                    Automatically send receipts via WhatsApp
+                    Automatically open WhatsApp Web to share receipts
                   </FormDescription>
                 </div>
                 <FormControl>
