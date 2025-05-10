@@ -17,19 +17,17 @@ import { useForm } from "react-hook-form";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  whatsappContact: z.string().optional(),
 });
 
 interface ClassFormDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; whatsappContact?: string }) => void;
+  onSubmit: (data: { name: string }) => void;
   title: string;
   description: string;
   isEditing: boolean;
   initialValues: {
     name: string;
-    whatsappContact?: string;
   };
 }
 
@@ -46,14 +44,12 @@ export const ClassFormDialog: React.FC<ClassFormDialogProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialValues.name || "",
-      whatsappContact: initialValues.whatsappContact || "",
     },
   });
 
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     onSubmit({
       name: values.name,
-      whatsappContact: values.whatsappContact,
     });
     form.reset();
   };
@@ -75,24 +71,6 @@ export const ClassFormDialog: React.FC<ClassFormDialogProps> = ({
                   <FormLabel>Class Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Class 10-A" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="whatsappContact"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>WhatsApp Contact Number</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="e.g., +1234567890" 
-                      {...field} 
-                      value={field.value || ""}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

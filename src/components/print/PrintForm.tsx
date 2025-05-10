@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -46,7 +45,7 @@ import {
 const printFormSchema = z.object({
   className: z.string({
     required_error: "Please select a class",
-  }),
+  }).min(1, { message: "Class name is required" }),
   teacherName: z.string().optional(),
   documentType: z.string().optional(),
   printType: z.enum(["Recto", "Recto-verso", "Both"], {
@@ -55,7 +54,8 @@ const printFormSchema = z.object({
   pages: z.coerce
     .number()
     .int()
-    .positive({ message: "Must be a positive number" }),
+    .positive({ message: "Must be a positive number" })
+    .min(1, { message: "At least 1 page is required" }),
   rectoPages: z.coerce
     .number()
     .int()
@@ -104,6 +104,7 @@ const PrintForm = () => {
       paid: false,
       notes: "",
     },
+    mode: "onChange", // Added validation mode to validate on change
   });
 
   const { watch, setValue } = form;
@@ -142,6 +143,21 @@ const PrintForm = () => {
     
     setCalculatedPrice(parseFloat(totalPrice.toFixed(2)));
   }, [printType, pages, rectoPages, rectoVersoPages, copies, settings]);
+
+  // Validate that total pages is at least 1 for "Both" mode
+  useEffect(() => {
+    if (printType === "Both") {
+      const totalPages = (rectoPages || 0) + (rectoVersoPages || 0);
+      if (totalPages < 1) {
+        form.setError("rectoPages", { 
+          type: "custom", 
+          message: "Total pages must be at least 1" 
+        });
+      } else {
+        form.clearErrors("rectoPages");
+      }
+    }
+  }, [rectoPages, rectoVersoPages, printType, form]);
 
   // Fetch data from db
   useEffect(() => {
@@ -234,7 +250,7 @@ const PrintForm = () => {
                 name="className"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Class Name*</FormLabel>
+                    <FormLabel>Class Name<span className="text-destructive">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -346,7 +362,7 @@ const PrintForm = () => {
             {printType === "Both" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormItem>
-                  <FormLabel>Recto Pages</FormLabel>
+                  <FormLabel>Recto Pages<span className="text-destructive">*</span></FormLabel>
                   <div className="flex items-center">
                     <Button 
                       type="button"
@@ -377,10 +393,11 @@ const PrintForm = () => {
                   <FormDescription>
                     Price per page: {settings.priceRecto.toFixed(2)} MAD
                   </FormDescription>
+                  <FormMessage />
                 </FormItem>
 
                 <FormItem>
-                  <FormLabel>Recto-Verso Pages</FormLabel>
+                  <FormLabel>Recto-Verso Pages<span className="text-destructive">*</span></FormLabel>
                   <div className="flex items-center">
                     <Button 
                       type="button"
@@ -411,6 +428,7 @@ const PrintForm = () => {
                   <FormDescription>
                     Price per page: {settings.priceRectoVerso.toFixed(2)} MAD
                   </FormDescription>
+                  <FormMessage />
                 </FormItem>
 
                 <FormField
@@ -425,6 +443,7 @@ const PrintForm = () => {
                       <FormDescription>
                         Automatically calculated from Recto and Recto-Verso pages
                       </FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -436,7 +455,7 @@ const PrintForm = () => {
                   name="pages"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Number of Pages*</FormLabel>
+                      <FormLabel>Number of Pages<span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <Input type="number" {...field} min={1} />
                       </FormControl>

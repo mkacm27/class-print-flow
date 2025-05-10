@@ -19,8 +19,8 @@ import {
 
 interface ClassesTabProps {
   classes: Class[];
-  onAddClass: (name: string, whatsappContact?: string) => void;
-  onUpdateClass: (id: string, name: string, whatsappContact?: string) => void;
+  onAddClass: (name: string) => void;
+  onUpdateClass: (id: string, name: string) => void;
   onDeleteClass: (id: string) => void;
 }
 
@@ -35,11 +35,11 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
   const [editingClass, setEditingClass] = React.useState<Class | null>(null);
   const [classToDelete, setClassToDelete] = React.useState<Class | null>(null);
 
-  const handleSubmit = (data: { name: string; whatsappContact?: string }) => {
+  const handleSubmit = (data: { name: string }) => {
     if (editingClass) {
-      onUpdateClass(editingClass.id, data.name, data.whatsappContact);
+      onUpdateClass(editingClass.id, data.name);
     } else {
-      onAddClass(data.name, data.whatsappContact);
+      onAddClass(data.name);
     }
     setIsDialogOpen(false);
     setEditingClass(null);
@@ -62,13 +62,6 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
     {
       header: "Class Name",
       accessorKey: "name" as const,
-      searchable: true,
-      sortable: true,
-    },
-    {
-      header: "WhatsApp Contact",
-      accessorKey: "whatsappContact" as const,
-      cell: (row: Class) => row.whatsappContact || "Not set",
       searchable: true,
       sortable: true,
     },
@@ -142,7 +135,6 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
         isEditing={!!editingClass}
         initialValues={{
           name: editingClass?.name || "",
-          whatsappContact: editingClass?.whatsappContact || "",
         }}
       />
       

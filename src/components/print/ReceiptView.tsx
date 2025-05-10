@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -22,6 +23,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { generatePDFReceipt, savePDFToLocalFolder } from "@/utils/pdf-utils";
 import { getClasses } from "@/lib/db";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const ReceiptView = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +41,7 @@ const ReceiptView = () => {
     whatsappTemplate: "",
   });
   const [loading, setLoading] = useState(true);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -53,17 +63,23 @@ const ReceiptView = () => {
     loadData();
   }, [id]);
 
-  const handleShare = async () => {
+  const handleShare = () => {
+    if (!printJob) return;
+    setIsShareDialogOpen(true);
+  };
+
+  const confirmShare = async () => {
     if (!printJob) return;
     
     try {
-      // Use the sendWhatsAppNotification function from lib/print-jobs.ts
+      // Use the sendWhatsAppNotification function
       await sendWhatsAppNotification(printJob);
       
       toast({
         title: "WhatsApp Web Opened",
         description: "WhatsApp web has been opened with your receipt details.",
       });
+      setIsShareDialogOpen(false);
     } catch (error) {
       console.error("Error opening WhatsApp:", error);
       toast({
@@ -233,13 +249,13 @@ const ReceiptView = () => {
                 <p className="text-sm text-gray-500">Class</p>
                 <p className="font-medium">{printJob.className}</p>
               </div>
-              {printJob.teacherName && (
+              {printJob.teacherName && printJob.teacherName !== 'none' && (
                 <div>
                   <p className="text-sm text-gray-500">Teacher</p>
                   <p className="font-medium">{printJob.teacherName}</p>
                 </div>
               )}
-              {printJob.documentType && (
+              {printJob.documentType && printJob.documentType !== 'none' && (
                 <div>
                   <p className="text-sm text-gray-500">Document Type</p>
                   <p className="font-medium">{printJob.documentType}</p>
@@ -274,7 +290,7 @@ const ReceiptView = () => {
           
           <div className="flex justify-between items-center mt-6">
             <div className="text-sm text-gray-500">Total Amount</div>
-            <div className="text-xl font-bold">${printJob.totalPrice.toFixed(2)}</div>
+            <div className="text-xl font-bold">{printJob.totalPrice.toFixed(2)} MAD</div>
           </div>
         </CardContent>
         
@@ -299,6 +315,92 @@ const ReceiptView = () => {
           </div>
         </CardFooter>
       </Card>
+
+      {/* WhatsApp Share Confirmation Dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Receipt via WhatsApp</DialogTitle>
+            <DialogDescription>
+              Please review the receipt details before sharing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-[60vh] overflow-y-auto py-4">
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="font-medium">Receipt Number:</p>
+                  <p>{printJob.serialNumber}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Date:</p>
+                  <p>{receiptDate}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Class:</p>
+                  <p>{printJob.className}</p>
+                </div>
+                {printJob.teacherName && printJob.teacherName !== 'none' && (
+                  <div>
+                    <p className="font-medium">Teacher:</p>
+                    <p>{printJob.teacherName}</p>
+                  </div>
+                )}
+                {printJob.documentType && printJob.documentType !== 'none' && (
+                  <div>
+                    <p className="font-medium">Document Type:</p>
+                    <p>{printJob.documentType}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium">Print Type:</p>
+                  <p>{printJob.printType}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Pages:</p>
+                  <p>{printJob.pages}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Copies:</p>
+                  <p>{printJob.copies}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Total Price:</p>
+                  <p>{printJob.totalPrice.toFixed(2)} MAD</p>
+                </div>
+                <div>
+                  <p className="font-medium">Payment Status:</p>
+                  <Badge variant={printJob.paid ? "default" : "secondary"} className="text-xs">
+                    {printJob.paid ? "PAID" : "UNPAID"}
+                  </Badge>
+                </div>
+              </div>
+              
+              {printJob.notes && (
+                <div>
+                  <p className="font-medium">Notes:</p>
+                  <p>{printJob.notes}</p>
+                </div>
+              )}
+              
+              {!printJob.paid && (
+                <div className="pt-2 border-t">
+                  <p className="text-destructive font-medium">A payment reminder will be included in the message.</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setIsShareDialogOpen(false)}>Cancel</Button>
+            <Button onClick={confirmShare} className="gap-2">
+              <Send className="w-4 h-4" />
+              Share via WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

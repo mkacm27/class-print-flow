@@ -35,27 +35,62 @@ export const getPrintJobs = async (): Promise<PrintJob[]> => {
   return JSON.parse(localStorage.getItem('printjobs') || '[]');
 };
 
+// Format a date for display
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleString();
+};
+
+// Generate detailed receipt message for WhatsApp
+const generateDetailedReceiptMessage = (printJob: PrintJob, settings: any): string => {
+  const formattedDate = formatDate(printJob.timestamp);
+  
+  // Build the message with complete receipt details
+  let message = `*${settings.shopName} - Receipt*\n\n`;
+  message += `*Receipt Number:* ${printJob.serialNumber}\n`;
+  message += `*Date:* ${formattedDate}\n\n`;
+  message += `*Class:* ${printJob.className}\n`;
+  
+  if (printJob.teacherName && printJob.teacherName !== 'none') {
+    message += `*Teacher:* ${printJob.teacherName}\n`;
+  }
+  
+  if (printJob.documentType && printJob.documentType !== 'none') {
+    message += `*Document Type:* ${printJob.documentType}\n`;
+  }
+  
+  message += `*Print Type:* ${printJob.printType}\n`;
+  message += `*Pages:* ${printJob.pages}\n`;
+  message += `*Copies:* ${printJob.copies}\n`;
+  message += `*Total Price:* ${printJob.totalPrice.toFixed(2)} MAD\n\n`;
+  
+  if (printJob.notes) {
+    message += `*Notes:* ${printJob.notes}\n\n`;
+  }
+  
+  message += `*Payment Status:* ${printJob.paid ? "PAID" : "UNPAID"}\n`;
+  
+  // Add payment reminder for unpaid receipts
+  if (!printJob.paid) {
+    message += `\n*REMINDER:* Please arrange payment as soon as possible. Thank you!`;
+  }
+  
+  return message;
+};
+
 // Send WhatsApp notification
 export const sendWhatsAppNotification = async (printJob: PrintJob): Promise<void> => {
   const settings = await getSettings();
   if (!settings.enableWhatsappNotification) return;
   
   try {
-    // Create the WhatsApp message using the template
-    let message = settings.whatsappTemplate
-      .replace("{{serialNumber}}", printJob.serialNumber)
-      .replace("{{className}}", printJob.className)
-      .replace("{{totalPrice}}", `$${printJob.totalPrice.toFixed(2)}`);
-      
-    // Add reminder for unpaid receipts
-    if (!printJob.paid) {
-      message += "\n\nPlease arrange payment as soon as possible. Thank you!";
-    }
+    // Create the detailed WhatsApp message
+    const message = generateDetailedReceiptMessage(printJob, settings);
     
     // Encode the message for the URL
     const encodedMessage = encodeURIComponent(message);
     
-    // Open WhatsApp Web with the message (without phone number)
+    // Open WhatsApp Web with the message
     window.open(`https://web.whatsapp.com/send?text=${encodedMessage}`, "_blank");
     
   } catch (error) {
@@ -92,11 +127,6 @@ export const addPrintJob = async (job: Omit<PrintJob, 'id' | 'serialNumber' | 't
               title: "PDF Receipt Saved",
               description: `Saved to ${filePath}`,
             });
-            
-            // After saving PDF, send WhatsApp notification if enabled
-            if (settings.enableWhatsappNotification) {
-              sendWhatsAppNotification(newJob);
-            }
           }
         })
         .catch(error => {
@@ -105,9 +135,6 @@ export const addPrintJob = async (job: Omit<PrintJob, 'id' | 'serialNumber' | 't
     } catch (error) {
       console.error("Failed to generate/save PDF:", error);
     }
-  } else if (settings.enableWhatsappNotification) {
-    // If PDF saving is not enabled but WhatsApp is, send notification
-    sendWhatsAppNotification(newJob);
   }
   
   return newJob;
