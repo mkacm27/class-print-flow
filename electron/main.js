@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
+const fs = require('fs');
 
 // Keep a global reference of the window object
 let mainWindow;
@@ -49,4 +50,33 @@ app.on('window-all-closed', function () {
 
 app.on('activate', function () {
   if (mainWindow === null) createWindow();
+});
+
+// File system operations
+ipcMain.handle('saveFile', async (event, filePath, dataBase64) => {
+  try {
+    const dirPath = path.dirname(filePath);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    
+    const data = Buffer.from(dataBase64, 'base64');
+    fs.writeFileSync(filePath, data);
+    return true;
+  } catch (error) {
+    console.error('Error saving file:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('ensureDirectoryExists', async (event, dirPath) => {
+  try {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    return true;
+  } catch (error) {
+    console.error('Error creating directory:', error);
+    return false;
+  }
 });

@@ -23,6 +23,11 @@ export default defineConfig(({ mode }) => ({
   base: mode === 'production' ? './' : '/',
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    target: 'esnext', // Modern browsers support
+    sourcemap: mode !== 'production'
+  },
+  optimizeDeps: {
+    exclude: ['electron'] // Prevent Vite from processing Electron
   }
 }));

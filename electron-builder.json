@@ -14,10 +14,13 @@
     "target": ["dmg"]
   },
   "win": {
-    "target": ["nsis"]
+    "target": ["portable", "nsis"]
   },
   "linux": {
-    "target": ["AppImage", "deb"],
+    "target": ["AppImage"],
     "category": "Utility"
-  }
+  },
+  "npmRebuild": false,
+  "buildDependenciesFromSource": true,
+  "electronVersion": "28.1.0"
 }
