@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import { PrintJob, getSettings } from "@/lib/db";
 import { format } from "date-fns";

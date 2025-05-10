@@ -95,15 +95,15 @@ const ReceiptView = () => {
     }
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     if (!printJob) return null;
-    return generatePDFReceipt(printJob);
+    return await generatePDFReceipt(printJob);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!printJob) return;
     
-    const doc = generatePDF();
+    const doc = await generatePDF();
     if (!doc) return;
     
     // Save the PDF
@@ -115,10 +115,10 @@ const ReceiptView = () => {
     });
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!printJob) return;
     
-    const doc = generatePDF();
+    const doc = await generatePDF();
     if (!doc) return;
     
     // Open PDF in a new window and trigger print dialog
