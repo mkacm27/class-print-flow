@@ -36,11 +36,11 @@ const Statistics = () => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const jobs = getPrintJobs();
+  const loadData = async () => {
+    const jobs = await getPrintJobs();
     setPrintJobs(jobs);
     
-    const classesData = getClasses();
+    const classesData = await getClasses();
     setClasses(classesData);
     
     calculateStatistics(jobs);

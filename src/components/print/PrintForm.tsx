@@ -119,13 +119,24 @@ const PrintForm = () => {
 
   // Fetch data from db
   useEffect(() => {
-    setClasses(getClasses());
-    setTeachers(getTeachers());
-    setDocumentTypes(getDocumentTypes());
-    setSettings(getSettings());
+    const loadData = async () => {
+      const classesData = await getClasses();
+      setClasses(classesData);
+      
+      const teachersData = await getTeachers();
+      setTeachers(teachersData);
+      
+      const documentTypesData = await getDocumentTypes();
+      setDocumentTypes(documentTypesData);
+      
+      const settingsData = await getSettings();
+      setSettings(settingsData);
+    };
+    
+    loadData();
   }, []);
 
-  const onSubmit = (data: PrintFormValues) => {
+  const onSubmit = async (data: PrintFormValues) => {
     // Create the print job with non-optional className and printType
     const printJob: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'> = {
       className: data.className,  // Explicitly mark as required
@@ -140,7 +151,7 @@ const PrintForm = () => {
     };
 
     try {
-      const newJob = addPrintJob(printJob);
+      const newJob = await addPrintJob(printJob);
       
       toast({
         title: "Print job created",

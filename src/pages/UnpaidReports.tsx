@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +13,20 @@ import { Separator } from "@/components/ui/separator";
 
 const UnpaidReports = () => {
   const [selectedClass, setSelectedClass] = useState<string>("");
-  const [classes, setClasses] = useState<Class[]>(getClasses());
+  const [classes, setClasses] = useState<Class[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const navigate = useNavigate();
 
-  const generateReport = () => {
+  useEffect(() => {
+    const loadClasses = async () => {
+      const classesData = await getClasses();
+      setClasses(classesData);
+    };
+    
+    loadClasses();
+  }, []);
+
+  const generateReport = async () => {
     if (!selectedClass) {
       toast({
         title: "No class selected",
@@ -31,7 +40,7 @@ const UnpaidReports = () => {
     
     try {
       // Get all print jobs
-      const allJobs = getPrintJobs();
+      const allJobs = await getPrintJobs();
       
       // Filter unpaid jobs for the selected class
       const unpaidJobs = allJobs.filter(

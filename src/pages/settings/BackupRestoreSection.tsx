@@ -11,10 +11,10 @@ export const BackupRestoreSection = () => {
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       // Create a download for the backup JSON
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(exportData());
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(await exportData());
       const downloadAnchorNode = document.createElement('a');
       downloadAnchorNode.setAttribute("href", dataStr);
       downloadAnchorNode.setAttribute("download", "print-shop-backup.json");

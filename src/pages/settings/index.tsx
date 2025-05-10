@@ -34,18 +34,27 @@ const Settings = () => {
   const [documentTypes, setDocumentTypes] = useState([]);
   
   useEffect(() => {
-    // Load settings on component mount
-    const loadedSettings = getSettings();
-    setSettings(loadedSettings);
+    const loadData = async () => {
+      // Load settings on component mount
+      const loadedSettings = await getSettings();
+      setSettings(loadedSettings);
+      
+      // Load data for other tabs
+      const classesData = await getClasses();
+      setClasses(classesData);
+      
+      const teachersData = await getTeachers();
+      setTeachers(teachersData);
+      
+      const docTypesData = await getDocumentTypes();
+      setDocumentTypes(docTypesData);
+    };
     
-    // Load data for other tabs
-    setClasses(getClasses());
-    setTeachers(getTeachers());
-    setDocumentTypes(getDocumentTypes());
+    loadData();
   }, []);
 
-  const handleUpdateSettings = (updatedSettings: SettingsType) => {
-    updateSettings(updatedSettings);
+  const handleUpdateSettings = async (updatedSettings: SettingsType) => {
+    await updateSettings(updatedSettings);
     setSettings(updatedSettings);
     
     toast({
@@ -56,9 +65,11 @@ const Settings = () => {
   };
 
   // Class handlers
-  const handleAddClass = (name: string, whatsappContact?: string) => {
-    const newClass = addClass(name, whatsappContact);
-    setClasses(getClasses());
+  const handleAddClass = async (name: string, whatsappContact?: string) => {
+    const newClass = await addClass(name, whatsappContact);
+    const updatedClasses = await getClasses();
+    setClasses(updatedClasses);
+    
     toast({
       title: "Class added",
       description: `${name} has been added successfully.`,
@@ -66,9 +77,11 @@ const Settings = () => {
     });
   };
 
-  const handleUpdateClass = (id: string, name: string, whatsappContact?: string) => {
-    updateClass(id, name, whatsappContact);
-    setClasses(getClasses());
+  const handleUpdateClass = async (id: string, name: string, whatsappContact?: string) => {
+    await updateClass(id, name, whatsappContact);
+    const updatedClasses = await getClasses();
+    setClasses(updatedClasses);
+    
     toast({
       title: "Class updated",
       description: `${name} has been updated successfully.`,
@@ -76,9 +89,11 @@ const Settings = () => {
     });
   };
 
-  const handleDeleteClass = (id: string) => {
-    deleteClass(id);
-    setClasses(getClasses());
+  const handleDeleteClass = async (id: string) => {
+    await deleteClass(id);
+    const updatedClasses = await getClasses();
+    setClasses(updatedClasses);
+    
     toast({
       title: "Class deleted",
       description: "The class has been deleted successfully.",

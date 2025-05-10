@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -36,15 +37,21 @@ const ReceiptView = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) {
-      const jobs = getPrintJobs();
-      const job = jobs.find((j) => j.id === id);
-      if (job) {
-        setPrintJob(job);
+    const loadData = async () => {
+      if (id) {
+        const jobs = await getPrintJobs();
+        const job = jobs.find((j) => j.id === id);
+        if (job) {
+          setPrintJob(job);
+        }
+        
+        const settingsData = await getSettings();
+        setSettings(settingsData);
+        setLoading(false);
       }
-      setSettings(getSettings());
-      setLoading(false);
-    }
+    };
+    
+    loadData();
   }, [id]);
 
   const handleShare = () => {

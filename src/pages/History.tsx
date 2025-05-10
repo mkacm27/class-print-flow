@@ -46,8 +46,8 @@ const History = () => {
     loadPrintJobs();
   }, [location.search]);
 
-  const loadPrintJobs = () => {
-    const jobs = getPrintJobs();
+  const loadPrintJobs = async () => {
+    const jobs = await getPrintJobs();
     setPrintJobs(jobs);
   };
 
