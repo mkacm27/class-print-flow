@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { getPrintJobs, PrintJob, getClasses, Class } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Dashboard = () => {
   const [printJobs, setPrintJobs] = useState<PrintJob[]>([]);
@@ -22,6 +23,7 @@ const Dashboard = () => {
   const [totalUnpaid, setTotalUnpaid] = useState(0);
   const [recentJobs, setRecentJobs] = useState<PrintJob[]>([]);
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,36 +76,39 @@ const Dashboard = () => {
         .sort((a, b) => b.totalUnpaid - a.totalUnpaid)
     : [];
 
+  // Set the text direction based on language
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div>
-        <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
-        <p className="text-gray-500">Overview of your print shop</p>
+        <h1 className="text-3xl font-bold mb-1">{t("dashboard")}</h1>
+        <p className="text-gray-500">{t("view_and_manage")}</p>
       </div>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Today's Print Jobs"
+          title={t("todays_print_jobs")}
           value={todayJobs}
           icon={<Printer className="w-4 h-4 text-primary" />}
           onClick={() => navigate("/history")}
         />
         <StatsCard
-          title="Total Pages Printed"
+          title={t("total_pages_printed")}
           value={totalPages.toLocaleString()}
           icon={<FileText className="w-4 h-4 text-primary" />}
           onClick={() => navigate("/statistics")}
         />
         <StatsCard
-          title="Unpaid Balance"
-          value={`$${totalUnpaid.toFixed(2)}`}
+          title={t("unpaid_balance")}
+          value={`${totalUnpaid.toFixed(2)} ${t("currency")}`}
           icon={<AlertCircle className="w-4 h-4 text-primary" />}
           onClick={() => navigate("/history?filter=unpaid")}
           trend={5}
         />
         <StatsCard
-          title="Total Print Jobs"
+          title={t("total_print_jobs")}
           value={printJobs.length}
           icon={<Receipt className="w-4 h-4 text-primary" />}
           onClick={() => navigate("/history")}
@@ -115,7 +120,7 @@ const Dashboard = () => {
         {/* Recent Activity */}
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Print Jobs</h2>
+            <h2 className="text-xl font-semibold mb-4">{t("recent_print_jobs")}</h2>
             {recentJobs.length > 0 ? (
               <div className="space-y-4">
                 {recentJobs.map((job) => {
@@ -136,7 +141,7 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${job.totalPrice.toFixed(2)}</p>
+                        <p className="font-medium">{job.totalPrice.toFixed(2)} {t("currency")}</p>
                         <p className="text-xs text-gray-500">
                           {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -149,19 +154,19 @@ const Dashboard = () => {
                     onClick={() => navigate("/history")}
                     className="text-primary text-sm hover:underline"
                   >
-                    View all print jobs
+                    {t("view_all_print_jobs")}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                <p>No print jobs yet</p>
+                <p>{t("no_print_jobs_yet")}</p>
                 <button
                   onClick={() => navigate("/print")}
                   className="text-primary text-sm hover:underline mt-2"
                 >
-                  Create your first print job
+                  {t("create_first_print_job")}
                 </button>
               </div>
             )}
@@ -171,7 +176,7 @@ const Dashboard = () => {
         {/* Classes with Unpaid Balance */}
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Unpaid Balances by Class</h2>
+            <h2 className="text-xl font-semibold mb-4">{t("unpaid_balances_by_class")}</h2>
             {classesWithHighBalance.length > 0 ? (
               <div className="space-y-4">
                 {classesWithHighBalance.map((c) => (
@@ -191,12 +196,12 @@ const Dashboard = () => {
                             variant={c.totalUnpaid > 50 ? "destructive" : "secondary"}
                             className="text-xs"
                           >
-                            Unpaid
+                            {t("unpaid")}
                           </Badge>
                         </div>
                       </div>
                     </div>
-                    <p className="font-bold">${c.totalUnpaid.toFixed(2)}</p>
+                    <p className="font-bold">{c.totalUnpaid.toFixed(2)} {t("currency")}</p>
                   </div>
                 ))}
                 <div className="text-center pt-2">
@@ -204,19 +209,19 @@ const Dashboard = () => {
                     onClick={() => navigate("/history?filter=unpaid")}
                     className="text-primary text-sm hover:underline"
                   >
-                    View all unpaid jobs
+                    {t("view_all_unpaid_jobs")}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Check className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                <p>All classes are paid up!</p>
+                <p>{t("all_classes_paid")}</p>
                 <button
                   onClick={() => navigate("/history")}
                   className="text-primary text-sm hover:underline mt-2"
                 >
-                  View all print jobs
+                  {t("view_all_print_jobs")}
                 </button>
               </div>
             )}

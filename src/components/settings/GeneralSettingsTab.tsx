@@ -12,6 +12,15 @@ import { ShopInformationSection } from "./general/ShopInformationSection";
 import { PriceSettingsSection } from "./general/PriceSettingsSection";
 import { AutomationSettingsSection } from "./general/AutomationSettingsSection";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface GeneralSettingsTabProps {
   settings: Settings;
@@ -23,6 +32,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
   onUpdateSettings,
 }) => {
   const { toast } = useToast();
+  const { t, language, setLanguage } = useLanguage();
   
   const form = useForm<GeneralSettingsFormValues>({
     resolver: zodResolver(formSchema),
@@ -37,6 +47,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
       defaultSavePath: settings.defaultSavePath || "C:/PrintReceipts",
       enableAutoPdfSave: settings.enableAutoPdfSave !== undefined ? settings.enableAutoPdfSave : true,
       enableWhatsappNotification: settings.enableWhatsappNotification !== undefined ? settings.enableWhatsappNotification : true,
+      enableAutoPaidNotification: settings.enableAutoPaidNotification !== undefined ? settings.enableAutoPaidNotification : false,
     },
   });
 
@@ -53,6 +64,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
       defaultSavePath: settings.defaultSavePath || "C:/PrintReceipts",
       enableAutoPdfSave: settings.enableAutoPdfSave !== undefined ? settings.enableAutoPdfSave : true,
       enableWhatsappNotification: settings.enableWhatsappNotification !== undefined ? settings.enableWhatsappNotification : true,
+      enableAutoPaidNotification: settings.enableAutoPaidNotification !== undefined ? settings.enableAutoPaidNotification : false,
     });
   }, [settings, form]);
 
@@ -64,25 +76,29 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
       });
       
       toast({
-        title: "Settings saved",
-        description: "Your settings have been updated successfully.",
+        title: t("settings_saved"),
+        description: t("settings_updated"),
         variant: "default",
       });
     } catch (error) {
       toast({
-        title: "Error saving settings",
-        description: "There was a problem saving your settings. Please try again.",
+        title: t("error_saving_settings"),
+        description: t("try_again"),
         variant: "destructive",
       });
       console.error("Error saving settings:", error);
     }
   };
 
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">General Settings</CardTitle>
-        <CardDescription>Customize your print shop settings (Currency: MAD)</CardDescription>
+        <CardTitle className="text-xl">{t("general_settings")}</CardTitle>
+        <CardDescription>{t("customize_settings")} ({t("currency")})</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -92,7 +108,28 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
             <PriceSettingsSection form={form} />
             <Separator />
             <AutomationSettingsSection form={form} />
-            <Button type="submit">Save Settings</Button>
+            <Separator />
+            
+            {/* Language Settings Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">{t("language_settings")}</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="language">{t("select_language")}</Label>
+                  <Select value={language} onValueChange={handleLanguageChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("select_language")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">{t("english")}</SelectItem>
+                      <SelectItem value="ar">{t("arabic")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            <Button type="submit">{t("save")}</Button>
           </form>
         </Form>
       </CardContent>

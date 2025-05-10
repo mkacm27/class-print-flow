@@ -43,4 +43,5 @@ export interface Settings {
   enableAutoPdfSave: boolean; // Toggle for auto PDF save
   enableWhatsappNotification: boolean; // Toggle for auto WhatsApp notification
   enableAutoPaidNotification: boolean; // Toggle for auto notification when marking as paid
+  language?: string; // Added language preference
 }

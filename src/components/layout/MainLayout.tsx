@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NavItemProps {
   to: string;
@@ -50,6 +51,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -65,19 +67,23 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const handleNewPrintOperation = () => {
     // This is just for feedback, actual navigation is handled by Link
     toast({
-      title: "New print operation",
-      description: "Starting a new print job form",
+      title: t("new_print_job"),
+      description: t("create_first_print_job"),
       duration: 2000,
     });
   };
 
+  // Determine text direction based on language
+  const isRtl = language === 'ar';
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r transform transition-transform duration-300 ease-in-out",
-          isMobile && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+          "fixed inset-y-0 z-40 w-64 bg-white border-r transform transition-transform duration-300 ease-in-out",
+          isMobile && !sidebarOpen ? (isRtl ? "translate-x-full" : "-translate-x-full") : "translate-x-0",
+          isRtl ? "right-0 border-l" : "left-0 border-r"
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b">
@@ -98,28 +104,28 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem
               to="/"
               icon={<Home className="w-5 h-5" />}
-              label="Dashboard"
+              label={t("dashboard")}
               active={location.pathname === '/'}
               onClick={closeSidebar}
             />
             <NavItem
               to="/print"
               icon={<Printer className="w-5 h-5" />}
-              label="New Print Job"
+              label={t("new_print_job")}
               active={location.pathname === '/print'}
               onClick={closeSidebar}
             />
             <NavItem
               to="/history"
               icon={<Receipt className="w-5 h-5" />}
-              label="Print History"
+              label={t("print_history")}
               active={location.pathname === '/history'}
               onClick={closeSidebar}
             />
             <NavItem
               to="/statistics"
               icon={<BarChart2 className="w-5 h-5" />}
-              label="Statistics"
+              label={t("statistics")}
               active={location.pathname === '/statistics'}
               onClick={closeSidebar}
             />
@@ -129,7 +135,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             <NavItem
               to="/settings"
               icon={<Settings className="w-5 h-5" />}
-              label="Settings"
+              label={t("settings")}
               active={location.pathname === '/settings'}
               onClick={closeSidebar}
             />
@@ -143,7 +149,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           >
             <Link to="/print">
               <Plus className="w-4 h-4" />
-              <span>New Print Job</span>
+              <span>{t("new_print_job")}</span>
             </Link>
           </Button>
         </div>
@@ -152,7 +158,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       {/* Main content */}
       <div className={cn(
         "flex-1 flex flex-col h-full",
-        isMobile ? "ml-0" : "ml-64"
+        isMobile ? "ml-0 mr-0" : isRtl ? "mr-64" : "ml-64"
       )}>
         {/* Mobile header */}
         {isMobile && (
@@ -160,7 +166,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             <Button variant="ghost" size="icon" onClick={toggleSidebar}>
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="flex items-center ml-3 gap-2">
+            <div className={cn("flex items-center ml-3 gap-2", isRtl ? "mr-3 ml-0" : "ml-3 mr-0")}>
               <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
                 <Printer className="w-4 h-4 text-white" />
               </div>
