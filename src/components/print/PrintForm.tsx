@@ -29,8 +29,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
-import { Printer, Check, Receipt, Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Printer, Check, Plus, Minus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +56,16 @@ const printFormSchema = z.object({
     .number()
     .int()
     .positive({ message: "Must be a positive number" }),
+  rectoPages: z.coerce
+    .number()
+    .int()
+    .min(0, { message: "Cannot be negative" })
+    .optional(),
+  rectoVersoPages: z.coerce
+    .number()
+    .int()
+    .min(0, { message: "Cannot be negative" })
+    .optional(),
   copies: z.coerce
     .number()
     .int()
@@ -88,6 +98,8 @@ const PrintForm = () => {
       documentType: "",
       printType: "Recto",
       pages: 1,
+      rectoPages: 0,
+      rectoVersoPages: 0,
       copies: 1,
       paid: false,
       notes: "",
@@ -97,25 +109,39 @@ const PrintForm = () => {
   const { watch, setValue } = form;
   const printType = watch("printType");
   const pages = watch("pages");
+  const rectoPages = watch("rectoPages") || 0;
+  const rectoVersoPages = watch("rectoVersoPages") || 0;
   const copies = watch("copies");
+
+  // Update total pages if in "Both" mode
+  useEffect(() => {
+    if (printType === "Both") {
+      setValue("pages", rectoPages + rectoVersoPages);
+    }
+  }, [rectoPages, rectoVersoPages, printType, setValue]);
 
   // Watch for changes to calculate price
   useEffect(() => {
-    let pricePerPage = 0;
-    switch (printType) {
-      case "Recto":
-        pricePerPage = settings.priceRecto;
-        break;
-      case "Recto-verso":
-        pricePerPage = settings.priceRectoVerso;
-        break;
-      case "Both":
-        pricePerPage = settings.priceBoth;
-        break;
+    let totalPrice = 0;
+    
+    if (printType === "Both") {
+      totalPrice = (rectoPages * settings.priceRecto + 
+                   rectoVersoPages * settings.priceRectoVerso) * copies;
+    } else {
+      let pricePerPage = 0;
+      switch (printType) {
+        case "Recto":
+          pricePerPage = settings.priceRecto;
+          break;
+        case "Recto-verso":
+          pricePerPage = settings.priceRectoVerso;
+          break;
+      }
+      totalPrice = pages * pricePerPage * copies;
     }
-    const total = pages * pricePerPage * copies;
-    setCalculatedPrice(parseFloat(total.toFixed(2)));
-  }, [printType, pages, copies, settings]);
+    
+    setCalculatedPrice(parseFloat(totalPrice.toFixed(2)));
+  }, [printType, pages, rectoPages, rectoVersoPages, copies, settings]);
 
   // Fetch data from db
   useEffect(() => {
@@ -137,11 +163,16 @@ const PrintForm = () => {
   }, []);
 
   const onSubmit = async (data: PrintFormValues) => {
-    // Create the print job with non-optional className and printType
+    // Calculate total pages
+    const totalPages = printType === "Both" 
+      ? (data.rectoPages || 0) + (data.rectoVersoPages || 0) 
+      : data.pages;
+    
+    // Create the print job
     const printJob: Omit<PrintJob, 'id' | 'serialNumber' | 'timestamp'> = {
-      className: data.className,  // Explicitly mark as required
-      printType: data.printType,  // Explicitly mark as required
-      pages: data.pages,          // Explicitly mark as required
+      className: data.className,
+      printType: data.printType,
+      pages: totalPages,
       totalPrice: calculatedPrice,
       teacherName: data.teacherName,
       documentType: data.documentType,
@@ -167,6 +198,17 @@ const PrintForm = () => {
         description: "Failed to create print job. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Helper function to increment/decrement page counts for "Both" mode
+  const adjustPages = (type: 'recto' | 'recto-verso', increment: boolean) => {
+    if (type === 'recto') {
+      const current = rectoPages || 0;
+      setValue("rectoPages", increment ? current + 1 : Math.max(0, current - 1));
+    } else {
+      const current = rectoVersoPages || 0;
+      setValue("rectoVersoPages", increment ? current + 1 : Math.max(0, current - 1));
     }
   };
 
@@ -272,7 +314,13 @@ const PrintForm = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Print Type*</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      if (value === "Both") {
+                        setValue("rectoPages", 0);
+                        setValue("rectoVersoPages", 0);
+                      }
+                    }} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -285,9 +333,9 @@ const PrintForm = () => {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {printType === "Recto" && `Price per page: $${settings.priceRecto.toFixed(2)}`}
-                      {printType === "Recto-verso" && `Price per page: $${settings.priceRectoVerso.toFixed(2)}`}
-                      {printType === "Both" && `Price per page: $${settings.priceBoth.toFixed(2)}`}
+                      {printType === "Recto" && `Price per page: ${settings.priceRecto.toFixed(2)} MAD`}
+                      {printType === "Recto-verso" && `Price per page: ${settings.priceRectoVerso.toFixed(2)} MAD`}
+                      {printType === "Both" && "Mixed pricing for Recto and Recto-verso pages"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -295,21 +343,111 @@ const PrintForm = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="pages"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Pages*</FormLabel>
+            {printType === "Both" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormItem>
+                  <FormLabel>Recto Pages</FormLabel>
+                  <div className="flex items-center">
+                    <Button 
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={() => adjustPages('recto', false)}
+                      disabled={rectoPages <= 0}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
                     <FormControl>
-                      <Input type="number" {...field} min={1} />
+                      <Input 
+                        type="number"
+                        {...form.register("rectoPages", { valueAsNumber: true })}
+                        className="text-center mx-2"
+                        min={0}
+                      />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <Button 
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={() => adjustPages('recto', true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <FormDescription>
+                    Price per page: {settings.priceRecto.toFixed(2)} MAD
+                  </FormDescription>
+                </FormItem>
 
+                <FormItem>
+                  <FormLabel>Recto-Verso Pages</FormLabel>
+                  <div className="flex items-center">
+                    <Button 
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={() => adjustPages('recto-verso', false)}
+                      disabled={rectoVersoPages <= 0}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        {...form.register("rectoVersoPages", { valueAsNumber: true })}
+                        className="text-center mx-2"
+                        min={0}
+                      />
+                    </FormControl>
+                    <Button 
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      onClick={() => adjustPages('recto-verso', true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <FormDescription>
+                    Price per page: {settings.priceRectoVerso.toFixed(2)} MAD
+                  </FormDescription>
+                </FormItem>
+
+                <FormField
+                  control={form.control}
+                  name="pages"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Total Pages</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} readOnly className="bg-muted" />
+                      </FormControl>
+                      <FormDescription>
+                        Automatically calculated from Recto and Recto-Verso pages
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="pages"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Number of Pages*</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} min={1} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="copies"
@@ -363,7 +501,7 @@ const PrintForm = () => {
             <div className="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center mt-6">
               <div>
                 <p className="text-sm text-gray-500">Total Price</p>
-                <p className="text-2xl font-bold">${calculatedPrice.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{calculatedPrice.toFixed(2)} MAD</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0">
                 <Button 

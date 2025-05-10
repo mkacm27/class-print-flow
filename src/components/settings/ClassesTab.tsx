@@ -3,9 +3,19 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Plus, Edit, Trash2, Phone } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { Class } from "@/lib/types";
 import { ClassFormDialog } from "./ClassFormDialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ClassesTabProps {
   classes: Class[];
@@ -21,7 +31,9 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
   onDeleteClass,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [editingClass, setEditingClass] = React.useState<Class | null>(null);
+  const [classToDelete, setClassToDelete] = React.useState<Class | null>(null);
 
   const handleSubmit = (data: { name: string; whatsappContact?: string }) => {
     if (editingClass) {
@@ -31,6 +43,19 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
     }
     setIsDialogOpen(false);
     setEditingClass(null);
+  };
+
+  const handleDeleteClick = (classItem: Class) => {
+    setClassToDelete(classItem);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (classToDelete) {
+      onDeleteClass(classToDelete.id);
+      setIsDeleteDialogOpen(false);
+      setClassToDelete(null);
+    }
   };
 
   const columns = [
@@ -50,7 +75,7 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
     {
       header: "Unpaid Balance",
       accessorKey: "totalUnpaid" as const,
-      cell: (row: Class) => `$${row.totalUnpaid.toFixed(2)}`,
+      cell: (row: Class) => `${row.totalUnpaid.toFixed(2)} MAD`,
       sortable: true,
     },
     {
@@ -74,7 +99,7 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              onDeleteClass(row.id);
+              handleDeleteClick(row);
             }}
           >
             <Trash2 className="w-4 h-4 text-destructive" />
@@ -120,6 +145,24 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
           whatsappContact: editingClass?.whatsappContact || "",
         }}
       />
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will delete the class "{classToDelete?.name}". 
+              This action cannot be undone and may affect existing print jobs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

@@ -39,7 +39,7 @@ export const ShopInformationSection: React.FC<ShopInformationSectionProps> = ({ 
                 <Textarea placeholder="Address, phone, email, etc." {...field} />
               </FormControl>
               <FormDescription>
-                This will be displayed on the receipts
+                This information will appear on receipts (include your currency: MAD)
               </FormDescription>
             </FormItem>
           )}
