@@ -4,13 +4,14 @@ import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-
-const DASHBOARD_PIN = "1234"; // This could be stored in settings later
+import { login } from "@/lib/auth";
 
 const Index = () => {
-  const [pin, setPin] = useState("");
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("");
   const [accessGranted, setAccessGranted] = useState(false);
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -18,8 +19,7 @@ const Index = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (pin === DASHBOARD_PIN) {
-      sessionStorage.setItem("dashboard_access", "true");
+    if (login(username, password)) {
       setAccessGranted(true);
       toast({
         title: t("access_granted"),
@@ -28,10 +28,10 @@ const Index = () => {
     } else {
       toast({
         title: t("access_denied"),
-        description: t("incorrect_pin"),
+        description: "Incorrect username or password.", // This should be translated
         variant: "destructive",
       });
-      setPin("");
+      setPassword("");
     }
   };
 
@@ -43,22 +43,33 @@ const Index = () => {
     <div className="flex items-center justify-center min-h-[80vh]" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">{t("dashboard_access")}</CardTitle>
-          <CardDescription>{t("enter_pin")}</CardDescription>
+          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
               <Input
-                type="password"
-                placeholder={t("enter_pin")}
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                className="text-center text-xl tracking-widest"
-                maxLength={4}
+                id="username"
+                type="text"
+                placeholder="e.g. admin"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
               />
             </div>
-            <Button type="submit" className="w-full">{t("dashboard_access")}</Button>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full">Login</Button>
           </form>
         </CardContent>
       </Card>
