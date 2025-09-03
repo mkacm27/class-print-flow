@@ -1,11 +1,10 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings } from "@/lib/types";
+import { Settings as SettingsType } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { formSchema, GeneralSettingsFormValues } from "./general/schema";
 import { ShopInformationSection } from "./general/ShopInformationSection";
@@ -21,59 +20,77 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { getSettings, updateSettings } from "@/lib/settings";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface GeneralSettingsTabProps {
-  settings: Settings;
-  onUpdateSettings: (settings: Settings) => void;
-}
-
-export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
-  settings,
-  onUpdateSettings,
-}) => {
+export const GeneralSettingsTab: React.FC = () => {
   const { toast } = useToast();
   const { t, language, setLanguage } = useLanguage();
-  
+  const [settings, setSettings] = useState<SettingsType | null>(null);
+
   const form = useForm<GeneralSettingsFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shopName: settings.shopName,
-      contactInfo: settings.contactInfo,
-      priceRecto: settings.priceRecto,
-      priceRectoVerso: settings.priceRectoVerso,
-      priceBoth: settings.priceBoth,
-      maxUnpaidThreshold: settings.maxUnpaidThreshold,
-      whatsappTemplate: settings.whatsappTemplate,
-      defaultSavePath: settings.defaultSavePath || "C:/PrintReceipts",
-      enableAutoPdfSave: settings.enableAutoPdfSave !== undefined ? settings.enableAutoPdfSave : true,
-      enableWhatsappNotification: settings.enableWhatsappNotification !== undefined ? settings.enableWhatsappNotification : true,
-      enableAutoPaidNotification: settings.enableAutoPaidNotification !== undefined ? settings.enableAutoPaidNotification : false,
+      shopName: "",
+      contactInfo: "",
+      priceRecto: 0,
+      priceRectoVerso: 0,
+      priceBoth: 0,
+      maxUnpaidThreshold: 0,
+      whatsappTemplate: "",
+      defaultSavePath: "C:/PrintReceipts",
+      enableAutoPdfSave: true,
+      enableWhatsappNotification: true,
+      enableAutoPaidNotification: false,
     },
   });
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const loadedSettings = await getSettings();
+        setSettings(loadedSettings);
+      } catch (error) {
+        console.error("Error loading settings:", error);
+        toast({
+          title: "Error loading settings",
+          description: "Failed to load settings data.",
+          variant: "destructive",
+        });
+      }
+    };
+    loadSettings();
+  }, [toast]);
+
   // Update form when settings change
   useEffect(() => {
-    form.reset({
-      shopName: settings.shopName,
-      contactInfo: settings.contactInfo,
-      priceRecto: settings.priceRecto,
-      priceRectoVerso: settings.priceRectoVerso,
-      priceBoth: settings.priceBoth,
-      maxUnpaidThreshold: settings.maxUnpaidThreshold,
-      whatsappTemplate: settings.whatsappTemplate,
-      defaultSavePath: settings.defaultSavePath || "C:/PrintReceipts",
-      enableAutoPdfSave: settings.enableAutoPdfSave !== undefined ? settings.enableAutoPdfSave : true,
-      enableWhatsappNotification: settings.enableWhatsappNotification !== undefined ? settings.enableWhatsappNotification : true,
-      enableAutoPaidNotification: settings.enableAutoPaidNotification !== undefined ? settings.enableAutoPaidNotification : false,
-    });
+    if (settings) {
+      form.reset({
+        shopName: settings.shopName,
+        contactInfo: settings.contactInfo,
+        priceRecto: settings.priceRecto,
+        priceRectoVerso: settings.priceRectoVerso,
+        priceBoth: settings.priceBoth,
+        maxUnpaidThreshold: settings.maxUnpaidThreshold,
+        whatsappTemplate: settings.whatsappTemplate,
+        defaultSavePath: settings.defaultSavePath || "C:/PrintReceipts",
+        enableAutoPdfSave: settings.enableAutoPdfSave !== undefined ? settings.enableAutoPdfSave : true,
+        enableWhatsappNotification: settings.enableWhatsappNotification !== undefined ? settings.enableWhatsappNotification : true,
+        enableAutoPaidNotification: settings.enableAutoPaidNotification !== undefined ? settings.enableAutoPaidNotification : false,
+      });
+    }
   }, [settings, form]);
 
-  const onSubmit = (data: GeneralSettingsFormValues) => {
+  const onSubmit = async (data: GeneralSettingsFormValues) => {
+    if (!settings) return;
+
     try {
-      onUpdateSettings({
+      const updatedSettings = {
         ...settings,
         ...data,
-      });
+      };
+      await updateSettings(updatedSettings);
+      setSettings(updatedSettings);
       
       toast({
         title: t("settings_saved"),
@@ -93,6 +110,22 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
   };
+
+  if (!settings) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-1/2" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

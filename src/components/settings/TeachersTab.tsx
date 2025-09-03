@@ -1,36 +1,90 @@
-
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { Teacher } from "@/lib/types";
 import { ItemFormDialog } from "./ItemFormDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from "@/lib/teachers";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface TeachersTabProps {
-  teachers: Teacher[];
-  onAddTeacher: (name: string) => void;
-  onUpdateTeacher: (id: string, name: string) => void;
-  onDeleteTeacher: (id: string) => void;
-}
+export const TeachersTab: React.FC = () => {
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<Teacher | null>(null);
+  const { toast } = useToast();
 
-export const TeachersTab: React.FC<TeachersTabProps> = ({
-  teachers,
-  onAddTeacher,
-  onUpdateTeacher,
-  onDeleteTeacher,
-}) => {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [editingItem, setEditingItem] = React.useState<{ id: string; name: string } | null>(null);
-
-  const handleSubmit = (data: { itemName: string }) => {
-    if (editingItem) {
-      onUpdateTeacher(editingItem.id, data.itemName);
-    } else {
-      onAddTeacher(data.itemName);
+  const loadTeachers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const teachersData = await getTeachers();
+      setTeachers(teachersData);
+    } catch (error) {
+      console.error("Error loading teachers:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load teachers.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsDialogOpen(false);
-    setEditingItem(null);
+  }, [toast]);
+
+  useEffect(() => {
+    loadTeachers();
+  }, [loadTeachers]);
+
+  const handleSubmit = async (data: { itemName: string }) => {
+    try {
+      if (editingItem) {
+        await updateTeacher({ id: editingItem.id, name: data.itemName });
+        toast({ title: "Teacher updated", description: `${data.itemName} has been updated.` });
+      } else {
+        await addTeacher(data.itemName);
+        toast({ title: "Teacher added", description: `${data.itemName} has been added.` });
+      }
+      setIsDialogOpen(false);
+      setEditingItem(null);
+      loadTeachers();
+    } catch (error) {
+      console.error("Error saving teacher:", error);
+      toast({ title: "Error", description: "Failed to save teacher.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteClick = (item: Teacher) => {
+    setItemToDelete(item);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (itemToDelete) {
+      try {
+        await deleteTeacher(itemToDelete.id);
+        toast({ title: "Teacher deleted", description: `The teacher has been deleted.` });
+        setIsDeleteDialogOpen(false);
+        setItemToDelete(null);
+        loadTeachers();
+      } catch (error) {
+        console.error("Error deleting teacher:", error);
+        toast({ title: "Error", description: "Failed to delete teacher.", variant: "destructive" });
+      }
+    }
   };
 
   const columns = [
@@ -61,7 +115,7 @@ export const TeachersTab: React.FC<TeachersTabProps> = ({
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              onDeleteTeacher(row.id);
+              handleDeleteClick(row);
             }}
           >
             <Trash2 className="w-4 h-4 text-destructive" />
@@ -92,7 +146,15 @@ export const TeachersTab: React.FC<TeachersTabProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <DataTable data={teachers} columns={columns} />
+        {isLoading ? (
+           <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <DataTable data={teachers} columns={columns} />
+        )}
       </CardContent>
       
       <ItemFormDialog 
@@ -101,10 +163,28 @@ export const TeachersTab: React.FC<TeachersTabProps> = ({
         onSubmit={handleSubmit}
         title={editingItem ? "Edit Teacher" : "Add New Teacher"}
         description={editingItem ? "Update the teacher name." : "Enter a name for the new teacher."}
-        placeholder="e.g., Dr. Smith"
+        placeholder="e.g., Mr. John Doe"
+        label="Teacher Name"
         isEditing={!!editingItem}
         initialValue={editingItem?.name || ""}
       />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will delete the teacher "{itemToDelete?.name}". This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
