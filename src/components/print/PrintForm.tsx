@@ -43,6 +43,7 @@ import {
   getSettings,
   checkDuplicateReceipt
 } from "@/lib/db";
+import { calculatePrice } from "@/lib/pricing";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,24 +138,16 @@ const PrintForm = () => {
 
   // Watch for changes to calculate price
   useEffect(() => {
-    let totalPrice = 0;
-    
-    if (printType === "Both") {
-      totalPrice = (rectoPages * settings.priceRecto + 
-                   rectoVersoPages * settings.priceRectoVerso) * copies;
-    } else {
-      let pricePerPage = 0;
-      switch (printType) {
-        case "Recto":
-          pricePerPage = settings.priceRecto;
-          break;
-        case "Recto-verso":
-          pricePerPage = settings.priceRectoVerso;
-          break;
-      }
-      totalPrice = pages * pricePerPage * copies;
-    }
-    
+    const totalPrice = calculatePrice({
+      printType,
+      pages,
+      rectoPages,
+      rectoVersoPages,
+      copies,
+      settings,
+    });
+    // The formatting to a fixed number of decimal places should happen in the UI, not in the calculation logic.
+    // The previous implementation did parseFloat(totalPrice.toFixed(2)), which is good.
     setCalculatedPrice(parseFloat(totalPrice.toFixed(2)));
   }, [printType, pages, rectoPages, rectoVersoPages, copies, settings]);
 
