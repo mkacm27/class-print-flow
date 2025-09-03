@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -16,33 +15,56 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getClasses, addClass, updateClass, deleteClass } from "@/lib/classes";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface ClassesTabProps {
-  classes: Class[];
-  onAddClass: (name: string) => void;
-  onUpdateClass: (id: string, name: string) => void;
-  onDeleteClass: (id: string) => void;
-}
+export const ClassesTab: React.FC = () => {
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
+  const [classToDelete, setClassToDelete] = useState<Class | null>(null);
+  const { toast } = useToast();
 
-export const ClassesTab: React.FC<ClassesTabProps> = ({
-  classes,
-  onAddClass,
-  onUpdateClass,
-  onDeleteClass,
-}) => {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [editingClass, setEditingClass] = React.useState<Class | null>(null);
-  const [classToDelete, setClassToDelete] = React.useState<Class | null>(null);
-
-  const handleSubmit = (data: { name: string }) => {
-    if (editingClass) {
-      onUpdateClass(editingClass.id, data.name);
-    } else {
-      onAddClass(data.name);
+  const loadClasses = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const classesData = await getClasses();
+      setClasses(classesData);
+    } catch (error) {
+      console.error("Error loading classes:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load classes.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsDialogOpen(false);
-    setEditingClass(null);
+  }, [toast]);
+
+  useEffect(() => {
+    loadClasses();
+  }, [loadClasses]);
+
+  const handleSubmit = async (data: { name: string }) => {
+    try {
+      if (editingClass) {
+        await updateClass(editingClass.id, data.name);
+        toast({ title: "Class updated", description: `${data.name} has been updated.` });
+      } else {
+        await addClass(data.name);
+        toast({ title: "Class added", description: `${data.name} has been added.` });
+      }
+      setIsDialogOpen(false);
+      setEditingClass(null);
+      loadClasses();
+    } catch (error) {
+      console.error("Error saving class:", error);
+      toast({ title: "Error", description: "Failed to save class.", variant: "destructive" });
+    }
   };
 
   const handleDeleteClick = (classItem: Class) => {
@@ -50,11 +72,18 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (classToDelete) {
-      onDeleteClass(classToDelete.id);
-      setIsDeleteDialogOpen(false);
-      setClassToDelete(null);
+      try {
+        await deleteClass(classToDelete.id);
+        toast({ title: "Class deleted", description: `The class has been deleted.` });
+        setIsDeleteDialogOpen(false);
+        setClassToDelete(null);
+        loadClasses();
+      } catch (error) {
+        console.error("Error deleting class:", error);
+        toast({ title: "Error", description: "Failed to delete class.", variant: "destructive" });
+      }
     }
   };
 
@@ -123,7 +152,15 @@ export const ClassesTab: React.FC<ClassesTabProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <DataTable data={classes} columns={columns} />
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <DataTable data={classes} columns={columns} />
+        )}
       </CardContent>
       
       <ClassFormDialog 
