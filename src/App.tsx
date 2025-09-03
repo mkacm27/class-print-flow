@@ -20,23 +20,9 @@ import { initializeData } from "./lib/db";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize data and register service worker for PWA
+  // Initialize app data
   useEffect(() => {
-    // Initialize app data
     initializeData();
-    
-    // Register service worker for PWA functionality
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(error => {
-            console.log('ServiceWorker registration failed: ', error);
-          });
-      });
-    }
   }, []);
 
   return (
