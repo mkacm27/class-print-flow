@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import UnpaidReports from "./pages/UnpaidReports";
 import Dashboard from "./pages/Dashboard";
 import { initializeData } from "./lib/db";
+import { initializeDefaultUser } from "./lib/auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => {
   // Initialize app data
   useEffect(() => {
     initializeData();
+    initializeDefaultUser();
   }, []);
 
   return (
