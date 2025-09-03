@@ -13,12 +13,13 @@ const Index = () => {
   const [pin, setPin] = useState("");
   const [accessGranted, setAccessGranted] = useState(false);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (pin === DASHBOARD_PIN) {
+      sessionStorage.setItem("dashboard_access", "true");
       setAccessGranted(true);
       toast({
         title: t("access_granted"),
@@ -39,7 +40,7 @@ const Index = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh]" dir={t('language') === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="flex items-center justify-center min-h-[80vh]" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{t("dashboard_access")}</CardTitle>
