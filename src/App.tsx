@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import UnpaidReports from "./pages/UnpaidReports";
 import Dashboard from "./pages/Dashboard";
 import { initializeData } from "./lib/db";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -33,11 +34,15 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Redirect from / to /print as the new default page */}
-              <Route path="/" element={<Navigate to="/print" />} />
-
-              {/* Other routes */}
-              <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
+              <Route path="/" element={<Index />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout><Dashboard /></MainLayout>
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/print" element={<MainLayout><PrintJobPage /></MainLayout>} />
               <Route path="/history" element={<MainLayout><History /></MainLayout>} />
               <Route path="/receipt/:id" element={<MainLayout><Receipt /></MainLayout>} />

@@ -87,7 +87,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
               <Printer className="w-5 h-5 text-white" />
             </div>
@@ -102,10 +102,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <div className="px-3 py-4">
           <div className="space-y-1">
             <NavItem
-              to="/"
+              to="/dashboard"
               icon={<Home className="w-5 h-5" />}
               label={t("dashboard")}
-              active={location.pathname === '/'}
+              active={location.pathname === '/dashboard'}
               onClick={closeSidebar}
             />
             <NavItem
