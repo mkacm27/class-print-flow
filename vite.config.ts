@@ -28,7 +28,4 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext', // Modern browsers support
     sourcemap: mode !== 'production'
   },
-  optimizeDeps: {
-    exclude: ['electron'] // Prevent Vite from processing Electron
-  }
 }));

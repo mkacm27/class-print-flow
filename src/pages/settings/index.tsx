@@ -23,7 +23,8 @@ const Settings = () => {
     whatsappTemplate: "",
     defaultSavePath: "",
     enableAutoPdfSave: true,
-    enableWhatsappNotification: true
+    enableWhatsappNotification: true,
+    enableAutoPaidNotification: false
   });
   const [activeTab, setActiveTab] = useState("general");
   const { toast } = useToast();

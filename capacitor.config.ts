@@ -1,9 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.app',
-  appName: 'vite_react_shadcn_ts',
-  webDir: 'dist'
+  appId: 'app.printease.android',
+  appName: 'PrintEase',
+  webDir: 'dist',
+  android: {
+    allowMixedContent: true,
+    backgroundColor: '#ffffff'
+  }
 };
 
 export default config;

@@ -2,8 +2,6 @@
 import { jsPDF } from "jspdf";
 import { PrintJob, getSettings } from "@/lib/db";
 import { format } from "date-fns";
-import { saveFile, ensureDirectoryExists } from "@/lib/electron-bridge";
-import path from "path";
 
 // Function to generate a PDF receipt
 export const generatePDFReceipt = async (printJob: PrintJob): Promise<jsPDF | null> => {
@@ -118,7 +116,7 @@ export const generatePDFReceipt = async (printJob: PrintJob): Promise<jsPDF | nu
     doc.setFontSize(12);
     doc.text("Total Amount:", 130, currentY);
     doc.setFont("helvetica", "bold");
-    doc.text(`$${printJob.totalPrice.toFixed(2)}`, 175, currentY);
+    doc.text(`${printJob.totalPrice.toFixed(2)} MAD`, 175, currentY);
     
     // Add footer with payment reminder for unpaid receipts
     doc.setFontSize(8);
@@ -139,45 +137,19 @@ export const generatePDFReceipt = async (printJob: PrintJob): Promise<jsPDF | nu
   }
 };
 
-// Function to save PDF to local folder
+// Function to save PDF to local folder (simplified for mobile)
 export const savePDFToLocalFolder = async (printJob: PrintJob): Promise<string | null> => {
   try {
     const doc = await generatePDFReceipt(printJob);
     if (!doc) return null;
     
-    // Get settings
-    const settings = await getSettings();
-    const basePath = settings.defaultSavePath || "C:/PrintReceipts";
-    
     // Format timestamp for filename
     const timestamp = format(new Date(), "yyyyMMdd_HHmmss");
-    const sanitizedClassName = printJob.className.replace(/[^a-zA-Z0-9]/g, "_");
-    const folderPath = `${basePath}/${sanitizedClassName}`;
     const fileName = `Receipt_${printJob.serialNumber}_${timestamp}.pdf`;
-    const filePath = `${folderPath}/${fileName}`;
     
-    try {
-      // Ensure directory exists (in Electron environment)
-      await ensureDirectoryExists(folderPath);
-      
-      // Convert PDF to array buffer
-      const pdfData = doc.output('arraybuffer');
-      
-      // Save file using our bridge
-      const success = await saveFile(filePath, pdfData);
-      
-      if (success) {
-        return filePath;
-      } else {
-        // If we couldn't save to the filesystem (web mode),
-        // trigger browser download as fallback
-        doc.save(`Receipt_${printJob.serialNumber}.pdf`);
-        return "browser-download";
-      }
-    } catch (error) {
-      console.error("Failed to save PDF:", error);
-      return null;
-    }
+    // Trigger download for mobile browsers
+    doc.save(fileName);
+    return "mobile-download";
   } catch (error) {
     console.error("Error generating PDF:", error);
     return null;

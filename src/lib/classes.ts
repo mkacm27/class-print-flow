@@ -14,20 +14,19 @@ export const getClassById = async (id: string): Promise<Class | undefined> => {
   return classes.find(c => c.id === id);
 };
 
-export const addClass = async (name: string, whatsappContact?: string): Promise<Class> => {
+export const addClass = async (name: string): Promise<Class> => {
   const classes = await getClasses();
   const newClass: Class = {
     id: uuidv4(),
     name,
-    totalUnpaid: 0,
-    whatsappContact: whatsappContact || ''
+    totalUnpaid: 0
   };
   classes.push(newClass);
   localStorage.setItem('classes', JSON.stringify(classes));
   return newClass;
 };
 
-export const updateClass = async (id: string, name: string, whatsappContact?: string): Promise<void> => {
+export const updateClass = async (id: string, name: string): Promise<void> => {
   const classes = await getClasses();
   const index = classes.findIndex(c => c.id === id);
   if (index !== -1) {
@@ -36,7 +35,6 @@ export const updateClass = async (id: string, name: string, whatsappContact?: st
     classes[index] = {
       ...classes[index],
       name,
-      whatsappContact: whatsappContact || '',
       totalUnpaid
     };
     localStorage.setItem('classes', JSON.stringify(classes));
