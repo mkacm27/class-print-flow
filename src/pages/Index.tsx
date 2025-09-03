@@ -31,7 +31,7 @@ const Index = () => {
         description: "Incorrect username or password.", // This should be translated
         variant: "destructive",
       });
-      setPassword("");
+      setPassword("1234");
     }
   };
 
