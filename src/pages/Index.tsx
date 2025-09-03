@@ -11,7 +11,7 @@ import { login } from "@/lib/auth";
 
 const Index = () => {
   const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("1234");
   const [accessGranted, setAccessGranted] = useState(false);
   const { toast } = useToast();
   const { t, language } = useLanguage();
