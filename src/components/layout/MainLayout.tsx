@@ -18,8 +18,6 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { logout } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
 
 interface NavItemProps {
   to: string;
@@ -52,19 +50,9 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const { t, language } = useLanguage();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-  };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -152,13 +140,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               active={location.pathname === '/settings'}
               onClick={closeSidebar}
             />
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-md transition-colors hover:bg-red-50 text-red-600 hover:text-red-700"
-            >
-              <div className="w-5 h-5"><LogOut /></div>
-              <span className="font-medium">Logout</span>
-            </button>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-4">

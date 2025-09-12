@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { useEffect } from "react";
 import MainLayout from "./components/layout/MainLayout";
-import Index from "./pages/Index";
 import PrintJobPage from "./pages/PrintJobPage";
 import History from "./pages/History";
 import Receipt from "./pages/Receipt";
@@ -16,16 +15,12 @@ import NotFound from "./pages/NotFound";
 import UnpaidReports from "./pages/UnpaidReports";
 import Dashboard from "./pages/Dashboard";
 import { initializeData } from "./lib/db";
-import { initializeDefaultUser } from "./lib/auth";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-
 const queryClient = new QueryClient();
 
 const App = () => {
   // Initialize app data
   useEffect(() => {
     initializeData();
-    initializeDefaultUser();
   }, []);
 
   return (
@@ -36,15 +31,8 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout><Dashboard /></MainLayout>
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
               <Route path="/print" element={<MainLayout><PrintJobPage /></MainLayout>} />
               <Route path="/history" element={<MainLayout><History /></MainLayout>} />
               <Route path="/receipt/:id" element={<MainLayout><Receipt /></MainLayout>} />
