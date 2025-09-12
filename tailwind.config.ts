@@ -29,32 +29,8 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#007BFF',
-					foreground: '#FFFFFF',
-					50: '#E6F2FF',
-					100: '#CCE5FF',
-					200: '#99CAFF',
-					300: '#66AFFF',
-					400: '#3394FF',
-					500: '#007BFF',
-					600: '#0062CC',
-					700: '#004A99',
-					800: '#003166',
-					900: '#001933',
-				},
-				accent: {
-					DEFAULT: '#00C49A',
-					foreground: '#FFFFFF',
-					50: '#E6FAF6',
-					100: '#CCF6ED',
-					200: '#99ECDB',
-					300: '#66E3C9',
-					400: '#33D9B7',
-					500: '#00C49A',
-					600: '#009D7B',
-					700: '#00755C',
-					800: '#004E3E',
-					900: '#00271F',
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))',
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -68,6 +44,10 @@ export default {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
 				},
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))'
+				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
@@ -76,6 +56,18 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				gray: {
+					50: '#f9fafb',
+					100: '#f3f4f6',
+					200: '#e5e7eb',
+					300: '#d1d5db',
+					400: '#9ca3af',
+					500: '#6b7280',
+					600: '#4b5563',
+					700: '#374151',
+					800: '#1f2937',
+					900: '#111827',
+				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
