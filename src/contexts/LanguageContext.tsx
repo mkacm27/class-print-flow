@@ -13,6 +13,17 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 // Arabic translation dictionary
 const translations: Record<string, Record<string, string>> = {
   ar: {
+    // Login
+    'welcome_back': 'أهلاً وسهلاً',
+    'enter_credentials': 'أدخل بياناتك للوصول إلى لوحة المعلومات',
+    'username': 'اسم المستخدم',
+    'password': 'كلمة المرور',
+    'login': 'دخول',
+    'default_credentials': 'البيانات الافتراضية',
+    'username_admin': 'اسم المستخدم: admin',
+    'password_1234': 'كلمة المرور: 1234',
+    'incorrect_credentials': 'اسم المستخدم أو كلمة المرور غير صحيحة',
+
     // Common
     'dashboard': 'لوحة المعلومات',
     'print': 'طباعة',

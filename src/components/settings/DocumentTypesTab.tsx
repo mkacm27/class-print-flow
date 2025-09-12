@@ -164,7 +164,6 @@ export const DocumentTypesTab: React.FC = () => {
         title={editingItem ? "Edit Document Type" : "Add New Document Type"}
         description={editingItem ? "Update the document type." : "Enter a name for the new document type."}
         placeholder="e.g., Exam, Homework, etc."
-        label="Document Type Name"
         isEditing={!!editingItem}
         initialValue={editingItem?.name || ""}
       />

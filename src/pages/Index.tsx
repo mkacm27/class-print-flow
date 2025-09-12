@@ -28,7 +28,7 @@ const Index = () => {
     } else {
       toast({
         title: t("access_denied"),
-        description: "Incorrect username or password.", // This should be translated
+        description: t("incorrect_credentials"),
         variant: "destructive",
       });
       setPassword("1234");
@@ -43,33 +43,39 @@ const Index = () => {
     <div className="flex items-center justify-center min-h-[80vh]" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
+          <CardTitle className="text-2xl">{t("welcome_back")}</CardTitle>
+          <CardDescription>{t("enter_credentials")}</CardDescription>
+          <div className="mt-4 p-3 bg-muted rounded-lg text-sm">
+            <p className="font-medium mb-2">{t("default_credentials")}:</p>
+            <p className="text-muted-foreground">{t("username_admin")}</p>
+            <p className="text-muted-foreground">{t("password_1234")}</p>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t("username")}</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="e.g. admin"
+                placeholder="admin"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("password")}</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="1234"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <Button type="submit" className="w-full">Login</Button>
+            <Button type="submit" className="w-full">{t("login")}</Button>
           </form>
         </CardContent>
       </Card>

@@ -164,7 +164,6 @@ export const TeachersTab: React.FC = () => {
         title={editingItem ? "Edit Teacher" : "Add New Teacher"}
         description={editingItem ? "Update the teacher name." : "Enter a name for the new teacher."}
         placeholder="e.g., Mr. John Doe"
-        label="Teacher Name"
         isEditing={!!editingItem}
         initialValue={editingItem?.name || ""}
       />
