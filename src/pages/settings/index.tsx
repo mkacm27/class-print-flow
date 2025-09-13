@@ -14,7 +14,7 @@ const Settings = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className={cn("space-y-6", isMobile && "pb-6")}>
+    <div className={cn("h-full", isMobile && "pb-6")}>
       <SettingsHeader />
 
       <Tabs defaultValue="general" className="w-full">
@@ -76,32 +76,34 @@ const Settings = () => {
           </ScrollArea>
         </div>
         
-        <div className={cn("mt-6", isMobile && "px-2")}>
-          <TabsContent value="general" className="space-y-6 m-0">
-            <div className="mobile-card">
-              <GeneralSettingsTab />
-            </div>
-          </TabsContent>
-          <TabsContent value="classes" className="space-y-6 m-0">
-            <div className="mobile-card">
-              <ClassesTab />
-            </div>
-          </TabsContent>
-          <TabsContent value="teachers" className="space-y-6 m-0">
-            <div className="mobile-card">
-              <TeachersTab />
-            </div>
-          </TabsContent>
-          <TabsContent value="documents" className="space-y-6 m-0">
-            <div className="mobile-card">
-              <DocumentTypesTab />
-            </div>
-          </TabsContent>
-          <TabsContent value="backup" className="space-y-6 m-0">
-            <div className="mobile-card">
-              <BackupRestoreSection />
-            </div>
-          </TabsContent>
+        <div className={cn("mt-4", isMobile && "px-2 pb-20")}>
+          <div className={cn("h-full", isMobile && "max-h-[calc(100vh-200px)] overflow-y-auto")}>
+            <TabsContent value="general" className="space-y-6 m-0">
+              <div className="mobile-card">
+                <GeneralSettingsTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="classes" className="space-y-6 m-0">
+              <div className="mobile-card">
+                <ClassesTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="teachers" className="space-y-6 m-0">
+              <div className="mobile-card">
+                <TeachersTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="documents" className="space-y-6 m-0">
+              <div className="mobile-card">
+                <DocumentTypesTab />
+              </div>
+            </TabsContent>
+            <TabsContent value="backup" className="space-y-6 m-0">
+              <div className="mobile-card">
+                <BackupRestoreSection />
+              </div>
+            </TabsContent>
+          </div>
         </div>
       </Tabs>
     </div>
