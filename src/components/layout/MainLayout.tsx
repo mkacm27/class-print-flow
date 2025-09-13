@@ -31,23 +31,15 @@ const NavItem = ({ to, icon, label, active, onClick }: NavItemProps) => (
   <Link 
     to={to} 
     className={cn(
-      "flex items-center gap-4 px-4 py-4 rounded-xl transition-all duration-200 group",
-      active 
-        ? "bg-primary text-white shadow-lg shadow-primary/25" 
-        : "hover:bg-gray-50 text-gray-700 hover:text-primary hover:shadow-md"
+      "sidebar-item",
+      active && "active"
     )}
     onClick={onClick}
   >
-    <div className={cn(
-      "w-6 h-6 transition-transform duration-200",
-      active ? "text-white" : "text-gray-400 group-hover:text-primary group-hover:scale-110"
-    )}>
+    <div className="w-5 h-5">
       {icon}
     </div>
-    <span className={cn(
-      "font-medium text-sm",
-      active ? "text-white" : "text-gray-700 group-hover:text-gray-900"
-    )}>
+    <span className="font-medium text-sm">
       {label}
     </span>
   </Link>
@@ -88,23 +80,23 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const isRtl = language === 'ar';
 
   return (
-    <div className="flex h-screen bg-gray-50" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="flex h-screen bg-surface-alt" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed inset-y-0 z-40 w-72 bg-white/95 backdrop-blur-xl border-r border-gray-200/50 transform transition-all duration-300 ease-in-out shadow-xl",
+          "fixed inset-y-0 z-40 w-72 bg-card/95 backdrop-blur-xl border-r border-border/50 transform transition-all duration-300 ease-in-out shadow-2xl",
           isMobile && !sidebarOpen ? (isRtl ? "translate-x-full" : "-translate-x-full") : "translate-x-0",
           isRtl ? "right-0 border-l" : "left-0 border-r"
         )}
       >
-        <div className="flex items-center justify-between h-20 px-6 border-b border-gray-200/50">
+        <div className="flex items-center justify-between h-20 px-6 border-b border-border/50">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
-              <Printer className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+              <Printer className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">PrintEase</h1>
-              <p className="text-xs text-gray-500">Print Management</p>
+              <h1 className="text-xl font-bold text-foreground">PrintEase</h1>
+              <p className="text-xs text-muted-foreground">Print Management</p>
             </div>
           </Link>
           {isMobile && (
@@ -144,7 +136,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               onClick={closeSidebar}
             />
           </div>
-          <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-6"></div>
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent my-6"></div>
           <div className="space-y-2">
             <NavItem
               to="/settings"
@@ -176,8 +168,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       )}>
         {/* Mobile header */}
         {isMobile && (
-          <header className="h-16 border-b bg-white/95 backdrop-blur-xl flex items-center px-4 shadow-sm">
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-gray-100 rounded-xl">
+          <header className="h-16 border-b bg-card/95 backdrop-blur-xl flex items-center px-4 shadow-sm">
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hover:bg-accent rounded-xl">
               <Menu className="h-5 w-5" />
             </Button>
             <div className={cn("flex items-center ml-3 gap-2", isRtl ? "mr-3 ml-0" : "ml-3 mr-0")}>
@@ -185,14 +177,14 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 <Printer className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">PrintEase</h1>
+                <h1 className="text-lg font-bold text-foreground">PrintEase</h1>
               </div>
             </div>
           </header>
         )}
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-8 bg-gray-50/50">
+        <main className="flex-1 overflow-auto p-4 md:p-8 bg-surface-alt">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

@@ -272,22 +272,23 @@ const PrintForm = () => {
 
   return (
     <>
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle>New Print Job</CardTitle>
-              <CardDescription>Create a new print job and generate a receipt</CardDescription>
-            </div>
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <Printer className="w-5 h-5 text-primary" />
-            </div>
+      <div className="settings-card p-8 max-w-4xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+            <Printer className="w-6 h-6 text-white" />
           </div>
-        </CardHeader>
-        <CardContent>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">New Print Job</h2>
+            <p className="text-muted-foreground">Create a new print job and generate a receipt</p>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-2xl border border-border/50 p-6">
           <Form {...form}>
-            <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">Job Information</h3>
                 <FormField
                   control={form.control}
                   name="className"
@@ -313,93 +314,96 @@ const PrintForm = () => {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="teacherName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Teacher Name</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a teacher" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {teachers.map((t) => (
-                            <SelectItem key={t.id} value={t.name}>
-                              {t.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="teacherName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Teacher Name</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a teacher" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {teachers.map((t) => (
+                              <SelectItem key={t.id} value={t.name}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="documentType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Document Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a document type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          {documentTypes.map((dt) => (
-                            <SelectItem key={dt.id} value={dt.name}>
-                              {dt.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="documentType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Document Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a document type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {documentTypes.map((dt) => (
+                              <SelectItem key={dt.id} value={dt.name}>
+                                {dt.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="printType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Print Type*</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        if (value === "Both") {
-                          setValue("rectoPages", 0);
-                          setValue("rectoVersoPages", 0);
-                        }
-                      }} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Recto">Recto (Single-sided)</SelectItem>
-                          <SelectItem value="Recto-verso">Recto-verso (Double-sided)</SelectItem>
-                          <SelectItem value="Both">Both (Mixed)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {printType === "Recto" && `Price per page: ${settings.priceRecto.toFixed(2)} MAD`}
-                        {printType === "Recto-verso" && `Price per page: ${settings.priceRectoVerso.toFixed(2)} MAD`}
-                        {printType === "Both" && "Mixed pricing for Recto and Recto-verso pages"}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">Print Configuration</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="printType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Print Type*</FormLabel>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value === "Both") {
+                            setValue("rectoPages", 0);
+                            setValue("rectoVersoPages", 0);
+                          }
+                        }} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Recto">Recto (Single-sided)</SelectItem>
+                            <SelectItem value="Recto-verso">Recto-verso (Double-sided)</SelectItem>
+                            <SelectItem value="Both">Both (Mixed)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          {printType === "Recto" && `Price per page: ${settings.priceRecto.toFixed(2)} MAD`}
+                          {printType === "Recto-verso" && `Price per page: ${settings.priceRectoVerso.toFixed(2)} MAD`}
+                          {printType === "Both" && "Mixed pricing for Recto and Recto-verso pages"}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               {printType === "Both" ? (
@@ -560,29 +564,30 @@ const PrintForm = () => {
                 )}
               />
 
-              <div className="bg-gray-50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center mt-6">
+              <div className="bg-accent/30 border border-primary/20 p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-center mt-8">
                 <div>
-                  <p className="text-sm text-gray-500">Total Price</p>
-                  <p className="text-2xl font-bold">{calculatedPrice.toFixed(2)} MAD</p>
+                  <p className="text-sm text-muted-foreground">Total Price</p>
+                  <p className="text-3xl font-bold text-primary">{calculatedPrice.toFixed(2)} MAD</p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0">
+                <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={() => navigate(-1)}
+                    className="px-6"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" className="gap-2">
-                    <Check className="w-4 h-4" />
+                  <Button type="submit" className="gap-2 px-8 gradient-bg text-white">
+                    <Printer className="w-5 h-5" />
                     Create Print Job
                   </Button>
-                </div>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                 </div>
+               </div>
+             </form>
+           </Form>
+         </div>
+       </div>
 
       {/* Duplicate Entry Alert Dialog */}
       <AlertDialog open={isDuplicateAlertOpen} onOpenChange={setIsDuplicateAlertOpen}>

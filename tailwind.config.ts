@@ -67,7 +67,12 @@ export default {
 					700: '#374151',
 					800: '#1f2937',
 					900: '#111827',
-				}
+				},
+				success: 'hsl(var(--success))',
+				warning: 'hsl(var(--warning))',
+				info: 'hsl(var(--info))',
+				paid: 'hsl(var(--paid))',
+				unpaid: 'hsl(var(--unpaid))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

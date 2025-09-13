@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Settings as SettingsType } from "@/lib/types";
-import { Separator } from "@/components/ui/separator";
 import { formSchema, GeneralSettingsFormValues } from "./general/schema";
 import { ShopInformationSection } from "./general/ShopInformationSection";
 import { PriceSettingsSection } from "./general/PriceSettingsSection";
@@ -22,6 +20,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { getSettings, updateSettings } from "@/lib/settings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Save, Store, DollarSign, Zap, Globe } from "lucide-react";
 
 export const GeneralSettingsTab: React.FC = () => {
   const { toast } = useToast();
@@ -113,44 +118,87 @@ export const GeneralSettingsTab: React.FC = () => {
 
   if (!settings) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-1/2" />
-          <Skeleton className="h-4 w-3/4" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">{t("general_settings")}</CardTitle>
-        <CardDescription>{t("customize_settings")} ({t("currency")})</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <ShopInformationSection form={form} />
-            <Separator />
-            <PriceSettingsSection form={form} />
-            <Separator />
-            <AutomationSettingsSection form={form} />
-            <Separator />
-            
-            {/* Language Settings Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">{t("language_settings")}</h3>
-              <div className="grid grid-cols-1 gap-4">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Accordion type="single" collapsible className="space-y-4" defaultValue="contact">
+          <AccordionItem value="contact" className="settings-card px-6 py-4 border-0">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Store className="w-5 h-5 text-primary" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-foreground">Contact Information</h3>
+                  <p className="text-sm text-muted-foreground">Shop details and contact info</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <ShopInformationSection form={form} />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="pricing" className="settings-card px-6 py-4 border-0">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-success" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-foreground">Price Settings</h3>
+                  <p className="text-sm text-muted-foreground">Configure printing prices (MAD)</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <PriceSettingsSection form={form} />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="automation" className="settings-card px-6 py-4 border-0">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-warning" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-foreground">Automation & Notifications</h3>
+                  <p className="text-sm text-muted-foreground">Auto-save, WhatsApp & notifications</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <AutomationSettingsSection form={form} />
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="language" className="settings-card px-6 py-4 border-0">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-info/10 rounded-xl flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-info" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-foreground">Language Settings</h3>
+                  <p className="text-sm text-muted-foreground">Choose your preferred language</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="language">{t("select_language")}</Label>
                   <Select value={language} onValueChange={handleLanguageChange}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder={t("select_language")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -160,12 +208,17 @@ export const GeneralSettingsTab: React.FC = () => {
                   </Select>
                 </div>
               </div>
-            </div>
-            
-            <Button type="submit">{t("save")}</Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        
+        <div className="flex justify-end pt-6">
+          <Button type="submit" className="gap-2 px-8">
+            <Save className="w-4 h-4" />
+            {t("save")}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
