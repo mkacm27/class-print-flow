@@ -30,7 +30,7 @@ jobs:
 
       - name: Remove server config for production build
         run: |
-          sed -i '/server:/,/},/d' capacitor.config.ts
+          sed -i '/server: {/,/  },/d' capacitor.config.ts
 
       - name: Build web
         run: npm run build
