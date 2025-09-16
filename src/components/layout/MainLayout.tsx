@@ -95,7 +95,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               <Printer className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">PrintEase</h1>
+              <h1 className="text-xl font-bold text-foreground">Class Print Flow</h1>
               <p className="text-xs text-muted-foreground">Print Management</p>
             </div>
           </Link>
@@ -177,7 +177,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 <Printer className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">PrintEase</h1>
+                <h1 className="text-lg font-bold text-foreground">Class Print Flow</h1>
               </div>
             </div>
           </header>
