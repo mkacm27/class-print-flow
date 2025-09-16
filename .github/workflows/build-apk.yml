@@ -28,15 +28,38 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Remove server config for production build
+      - name: Create production capacitor config
         run: |
-          sed -i '/server: {/,/  },/d' capacitor.config.ts
+          cp capacitor.config.ts capacitor.config.backup.ts
+          cat > capacitor.config.ts << 'EOF'
+          import type { CapacitorConfig } from '@capacitor/cli';
+
+          const config: CapacitorConfig = {
+            appId: 'app.lovable.74c07614935247b5beeb8bdbb2a81325',
+            appName: 'class-print-flow',
+            webDir: 'dist',
+            android: {
+              allowMixedContent: true,
+              backgroundColor: '#ffffff'
+            },
+            plugins: {
+              SplashScreen: {
+                launchShowDuration: 0
+              }
+            }
+          };
+
+          export default config;
+          EOF
 
       - name: Build web
         run: npm run build
 
       - name: Sync Capacitor
         run: npx cap sync android
+
+      - name: Clean Android build
+        run: cd android && ./gradlew clean
 
       - name: Build debug APK
         run: cd android && ./gradlew :app:assembleDebug
