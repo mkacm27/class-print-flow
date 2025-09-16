@@ -1,4 +1,4 @@
-package com.example.app;
+package app.lovable.class_print_flow;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -54,16 +54,9 @@ jobs:
 
       - name: Update Android build config
         run: |
-          # Update applicationId to match appId from capacitor config
-          sed -i 's/applicationId "com.example.app"/applicationId "app.lovable.74c07614935247b5beeb8bdbb2a81325"/' android/app/build.gradle
-          
-          # Update namespace to match applicationId
-          sed -i 's/namespace "com.example.app"/namespace "app.lovable.74c07614935247b5beeb8bdbb2a81325"/' android/app/build.gradle
-          
           # Increment version code to ensure fresh install
           TIMESTAMP=$(date +%s)
-          sed -i "s/versionCode 1/versionCode $TIMESTAMP/" android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "2.0"/' android/app/build.gradle
+          sed -i "s/versionCode 2/versionCode $TIMESTAMP/" android/app/build.gradle
 
       - name: Build web
         run: npm run build
